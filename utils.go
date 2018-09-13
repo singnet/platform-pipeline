@@ -33,14 +33,11 @@ func read_file(file string) (string, error) {
 	return string(buf), nil
 }
 
-func run_command(dir string, out string, command string, args ...string) error {
+func run_command(command string, dir string, out string, env []string, args ...string) error {
 
 	log.Printf("[run_command] dir: '%s', command: '%s', args: '%s'\n", dir, command, strings.Join(args, ","))
 
-	cmd := exec.Command(command, args...)
-	cmd.Dir = dir
-
-	err := set_exec_output(cmd, out)
+	cmd, err := get_cmd(command, dir, out, env, args...)
 
 	if err != nil {
 		return err
@@ -49,14 +46,10 @@ func run_command(dir string, out string, command string, args ...string) error {
 	return cmd.Run()
 }
 
-func run_command_async(dir string, out string, command string, args ...string) error {
+func run_command_async(command string, dir string, out string, env []string, args ...string) error {
 
 	log.Printf("[run_command_async] dir: '%s', command: '%s', args: '%s'\n", dir, command, strings.Join(args, ","))
-
-	cmd := exec.Command(command, args...)
-	cmd.Dir = dir
-
-	err := set_exec_output(cmd, out)
+	cmd, err := get_cmd(command, dir, out, env, args...)
 
 	if err != nil {
 		return err
@@ -65,12 +58,15 @@ func run_command_async(dir string, out string, command string, args ...string) e
 	return cmd.Start()
 }
 
-func set_exec_output(cmd *exec.Cmd, out string) error {
+func get_cmd(command string, dir string, out string, env []string, args ...string) (*exec.Cmd, error) {
+
+	cmd := exec.Command(command, args...)
+	cmd.Dir = dir
 
 	if out != "" {
 		std_out, err := os.Create(out)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		cmd.Stdout = std_out
 		cmd.Stderr = std_out
@@ -79,12 +75,20 @@ func set_exec_output(cmd *exec.Cmd, out string) error {
 		cmd.Stderr = os.Stderr
 	}
 
-	return nil
+	cmd.Env = os.Environ()
+	if env != nil && len(env) > 0 {
+		for _, e := range env {
+			cmd.Env = append(cmd.Env, e)
+		}
+	}
+
+	return cmd, nil
 }
 
 func check_with_timeout(f check_with_timeout_type) (bool, error) {
 	timeout := time.After(5 * time.Second)
 	tick := time.Tick(500 * time.Millisecond)
+
 	for {
 		select {
 		case <-timeout:
