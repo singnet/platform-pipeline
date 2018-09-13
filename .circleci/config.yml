@@ -63,6 +63,7 @@ jobs:
     - run:
         name: Run integration tests
         command: |
+          export PATH=$PATH:$GOPATH/bin
           cd $SINGNET_REPOS
           git clone https://github.com/stellarspot/platform-pipeline.git
           cd platform-pipeline

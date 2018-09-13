@@ -21,7 +21,7 @@ func init() {
 	env_singnet_repos = os.Getenv("SINGNET_REPOS")
 	env_go_path = os.Getenv("GOPATH")
 	log_path = env_go_path + "/log"
-	log.Printf("SINGNET_REPOS=%s%n", env_singnet_repos)
+	log.Printf("SINGNET_REPOS=%s%\n", env_singnet_repos)
 }
 
 func read_file(file string) (string, error) {
@@ -40,17 +40,46 @@ func run_command(dir string, out string, command string, args ...string) error {
 	cmd := exec.Command(command, args...)
 	cmd.Dir = dir
 
-	std_out, err := os.Create(out)
+	err := set_exec_output(cmd, out)
+
 	if err != nil {
 		return err
 	}
 
-	cmd.Stdout = std_out
-	cmd.Stderr = std_out
+	return cmd.Run()
+}
 
-	err = cmd.Start()
+func run_command_async(dir string, out string, command string, args ...string) error {
 
-	return err
+	log.Printf("[run_command_async] dir: '%s', command: '%s', args: '%s'\n", dir, command, strings.Join(args, ","))
+
+	cmd := exec.Command(command, args...)
+	cmd.Dir = dir
+
+	err := set_exec_output(cmd, out)
+
+	if err != nil {
+		return err
+	}
+
+	return cmd.Start()
+}
+
+func set_exec_output(cmd *exec.Cmd, out string) error {
+
+	if out != "" {
+		std_out, err := os.Create(out)
+		if err != nil {
+			return err
+		}
+		cmd.Stdout = std_out
+		cmd.Stderr = std_out
+	} else {
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+	}
+
+	return nil
 }
 
 func check_with_timeout(f check_with_timeout_type) (bool, error) {
