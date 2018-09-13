@@ -3,7 +3,7 @@ jobs:
   build:
     docker:
     - image: ubuntu:latest
-    working_directory: /root/go/src/github.com/singnet
+    working_directory: /root/go/src/github.com/singnet/platform-pipeline
     environment:
       GOPATH: /root/go
       SINGNET_REPOS: /root/go/src/github.com/singnet
@@ -60,12 +60,10 @@ jobs:
           git clone https://github.com/singnet/example-service.git
           cd example-service
           pip3 install -r requirements.txt
+    - checkout
     - run:
         name: Run integration tests
         command: |
           export PATH=$PATH:$GOPATH/bin
-          cd $SINGNET_REPOS
-          git clone https://github.com/stellarspot/platform-pipeline.git
-          cd platform-pipeline
           go get github.com/DATA-DOG/godog/cmd/godog
           godog
