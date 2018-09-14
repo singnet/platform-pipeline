@@ -12,6 +12,8 @@ jobs:
         name: Install tools
         command: |
           export PATH=$PATH:$GOPATH/bin
+          mkdir $GOPATH/download
+          cd $GOPATH/download
           apt-get update
           apt-get -y install sudo wget git
           # Install NodeJS toolset
