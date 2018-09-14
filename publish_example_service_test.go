@@ -12,9 +12,11 @@ var output_file string
 var output_contains_strings []string
 
 var platform_contracts_dir string
+var snet_config_file string
 
 func init() {
 	platform_contracts_dir = env_singnet_repos + "/platform-contracts"
+	snet_config_file = env_home + "/.snet/config"
 }
 
 func ethereum_network_is_running_on_port(port int) error {
@@ -114,11 +116,56 @@ func ipfs_is_runnig(port_api int, port_gateway int) error {
 	return nil
 }
 
+func identity_is_created_with_user_and_private_key(user string, private_key string) error {
+
+	err := run_command("snet", "", "", nil,
+		"identity", "create", user, "key", "--private-key", private_key)
+
+	if err != nil {
+		return err
+	}
+
+	err = run_command("snet", "", "", nil, "identity", "snet-user")
+
+	return err
+}
+
+func snet_is_configured_with_ethereum_rpc_endpoint(endpoint_ethereum_rpc int) error {
+
+	config := `
+[network.local]
+default_eth_rpc_endpoint = http://localhost:` + to_string(endpoint_ethereum_rpc)
+
+	err := append_to_file(snet_config_file, config)
+
+	if err != nil {
+		return err
+	}
+
+	err = run_command("snet", "", "", nil, "network", "local")
+
+	return err
+}
+
+func snet_is_configured_with_ipfs_endpoint(endpoint_ipfs int) error {
+
+	config := `
+[ipfs]
+default_ipfs_endpoint = http://localhost:` + to_string(endpoint_ipfs)
+
+	return append_to_file(snet_config_file, config)
+}
+
 func FeatureContext(s *godog.Suite) {
 	s.Step(`^Ethereum network is running on port (\d+)$`, ethereum_network_is_running_on_port)
 	s.Step(`^Contracts are deployed using Truffle$`, contracts_are_deployed_using_truffle)
 	s.Step(`^IPFS is running$`, ipfs_is_runnig)
 	s.Step(`^IPFS is running with API port (\d+) and Gateway port (\d+)$`, ipfs_is_runnig)
+	s.Step(`^Identity is created with user "([^"]*)" and private key "([^"]*)"$`,
+		identity_is_created_with_user_and_private_key)
+	s.Step(`^snet is configured with Ethereum RPC endpoint (\d+)$`, snet_is_configured_with_ethereum_rpc_endpoint)
+	s.Step(`^snet is configured with IPFS endpoint (\d+)$`, snet_is_configured_with_ipfs_endpoint)
+
 }
 
 func check_daemon_is_running() (bool, error) {

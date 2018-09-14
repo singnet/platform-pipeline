@@ -6,18 +6,21 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"strconv"
 	"strings"
 	"time"
 )
 
 type check_with_timeout_type func() (bool, error)
 
+var env_home string
 var env_singnet_repos string
 var env_go_path string
 var log_path string
 
 func init() {
 
+	env_home = os.Getenv("HOME")
 	env_singnet_repos = os.Getenv("SINGNET_REPOS")
 	env_go_path = os.Getenv("GOPATH")
 	log_path = env_go_path + "/log"
@@ -31,6 +34,19 @@ func read_file(file string) (string, error) {
 		return "", err
 	}
 	return string(buf), nil
+}
+
+func append_to_file(file_name string, content string) error {
+
+	file, err := os.OpenFile(file_name, os.O_APPEND|os.O_WRONLY, 0600)
+	if err != nil {
+		return err
+	}
+
+	defer file.Close()
+
+	_, err = file.WriteString(content)
+	return err
 }
 
 func run_command(command string, dir string, out string, env []string, args ...string) error {
@@ -102,4 +118,8 @@ func check_with_timeout(f check_with_timeout_type) (bool, error) {
 			}
 		}
 	}
+}
+
+func to_string(value int) string {
+	return strconv.Itoa(value)
 }
