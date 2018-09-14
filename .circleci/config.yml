@@ -3,10 +3,10 @@ jobs:
   build:
     docker:
     - image: ubuntu:latest
-    working_directory: /root/go/src/github.com/singnet/platform-pipeline
+    working_directory: /root/singnet/src/github.com/singnet/platform-pipeline
     environment:
-      GOPATH: /root/go
-      SINGNET_REPOS: /root/go/src/github.com/singnet
+      GOPATH: /root/singnet
+      SINGNET_REPOS: /root/singnet/src/github.com/singnet
     steps:
     - run:
         name: Install tools
@@ -65,5 +65,6 @@ jobs:
         name: Run integration tests
         command: |
           export PATH=$PATH:$GOPATH/bin
+          mkdir $GOPATH/log
           go get github.com/DATA-DOG/godog/cmd/godog
           godog

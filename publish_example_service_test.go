@@ -9,7 +9,7 @@ import (
 )
 
 var output_file string
-var output_contains_string string
+var output_contains_strings []string
 
 var platform_contracts_dir string
 
@@ -20,7 +20,7 @@ func init() {
 func ethereum_network_is_running_on_port(port int) error {
 
 	output_file = log_path + "/ganache.log"
-	output_contains_string = "Listening on 127.0.0.1:" + strconv.Itoa(port)
+	output_contains_strings = []string{"Listening on 127.0.0.1:" + strconv.Itoa(port)}
 
 	err := run_command_async(
 		"./node_modules/.bin/ganache-cli",
@@ -59,36 +59,42 @@ func contracts_are_deployed_using_truffle() error {
 	return err
 }
 
-func ipfs_is_runnig() error {
+func ipfs_is_runnig(port_api int, port_gateway int) error {
 
 	env := []string{"IPFS_PATH=" + env_go_path + "/ipfs"}
 
-	err := run_command("ipfs", platform_contracts_dir, "", env, "init")
+	err := run_command("ipfs", "", "", env, "init")
 
 	if err != nil {
 		return err
 	}
 
-	err = run_command("ipfs", platform_contracts_dir, "", env, "bootstrap", "rm", "--all")
+	err = run_command("ipfs", "", "", env, "bootstrap", "rm", "--all")
 
 	if err != nil {
 		return err
 	}
 
-	err = run_command("ipfs", platform_contracts_dir, "", env, "config", "Addresses.API", "/ip4/127.0.0.1/tcp/5002")
+	address_api := "/ip4/127.0.0.1/tcp/" + strconv.Itoa(port_api)
+	err = run_command("ipfs", "", "", env, "config", "Addresses.API", address_api)
 
 	if err != nil {
 		return err
 	}
 
-	err = run_command("ipfs", platform_contracts_dir, "", env, "config", "Addresses.Gateway", "/ip4/0.0.0.0/tcp/8081")
+	address_gateway := "/ip4/0.0.0.0/tcp/" + strconv.Itoa(port_gateway)
+	err = run_command("ipfs", "", "", env, "config", "Addresses.Gateway", address_gateway)
 
 	if err != nil {
 		return err
 	}
 
 	output_file = log_path + "/ipfs.log"
-	output_contains_string = "server listening on /ip4/0.0.0.0/tcp/8081"
+	output_contains_strings = []string{
+		"Daemon is ready",
+		"server listening on " + address_api,
+		"server listening on " + address_gateway,
+	}
 	err = run_command_async("ipfs", platform_contracts_dir, output_file, env, "daemon")
 
 	if err != nil {
@@ -112,12 +118,13 @@ func FeatureContext(s *godog.Suite) {
 	s.Step(`^Ethereum network is running on port (\d+)$`, ethereum_network_is_running_on_port)
 	s.Step(`^Contracts are deployed using Truffle$`, contracts_are_deployed_using_truffle)
 	s.Step(`^IPFS is running$`, ipfs_is_runnig)
+	s.Step(`^IPFS is running with API port (\d+) and Gateway port (\d+)$`, ipfs_is_runnig)
 }
 
 func check_daemon_is_running() (bool, error) {
 
 	log.Printf("check output file: '%s'\n", output_file)
-	log.Printf("check output file contains string: '%s'\n", output_contains_string)
+	log.Printf("check output file contains string: '%s'\n", strings.Join(output_contains_strings, ","))
 
 	out, err := read_file(output_file)
 	if err != nil {
@@ -132,5 +139,11 @@ func check_daemon_is_running() (bool, error) {
 		return false, errors.New("Output contains error!")
 	}
 
-	return strings.Contains(out, output_contains_string), nil
+	for _, str := range output_contains_strings {
+		if !strings.Contains(out, str) {
+			return false, nil
+		}
+	}
+
+	return true, nil
 }
