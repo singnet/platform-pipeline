@@ -13,6 +13,15 @@ import (
 
 type check_with_timeout_type func() (bool, error)
 
+type ExecCommand struct {
+	Command    string
+	Directory  string
+	Env        []string
+	Input      string
+	OutputFile string
+	Args       []string
+}
+
 var env_home string
 var env_singnet_repos string
 var env_go_path string
@@ -49,11 +58,12 @@ func append_to_file(file_name string, content string) error {
 	return err
 }
 
-func run_command(command string, dir string, out string, env []string, args ...string) error {
+func run_command(exec_commad ExecCommand) error {
 
-	log.Printf("[run_command] dir: '%s', command: '%s', args: '%s'\n", dir, command, strings.Join(args, ","))
+	log.Printf("[run_command] dir: '%s', command: '%s', args: '%s'\n",
+		exec_commad.Directory, exec_commad.Command, strings.Join(exec_commad.Args, ","))
 
-	cmd, err := get_cmd(command, dir, out, env, args...)
+	cmd, err := get_cmd(exec_commad)
 
 	if err != nil {
 		return err
@@ -62,10 +72,12 @@ func run_command(command string, dir string, out string, env []string, args ...s
 	return cmd.Run()
 }
 
-func run_command_async(command string, dir string, out string, env []string, args ...string) error {
+func run_command_async(exec_commad ExecCommand) error {
 
-	log.Printf("[run_command_async] dir: '%s', command: '%s', args: '%s'\n", dir, command, strings.Join(args, ","))
-	cmd, err := get_cmd(command, dir, out, env, args...)
+	log.Printf("[run_command_async] dir: '%s', command: '%s', args: '%s'\n",
+		exec_commad.Directory, exec_commad.Command, strings.Join(exec_commad.Args, ","))
+
+	cmd, err := get_cmd(exec_commad)
 
 	if err != nil {
 		return err
@@ -74,13 +86,13 @@ func run_command_async(command string, dir string, out string, env []string, arg
 	return cmd.Start()
 }
 
-func get_cmd(command string, dir string, out string, env []string, args ...string) (*exec.Cmd, error) {
+func get_cmd(exec_commad ExecCommand) (*exec.Cmd, error) {
 
-	cmd := exec.Command(command, args...)
-	cmd.Dir = dir
+	cmd := exec.Command(exec_commad.Command, exec_commad.Args...)
+	cmd.Dir = exec_commad.Directory
 
-	if out != "" {
-		std_out, err := os.Create(out)
+	if exec_commad.OutputFile != "" {
+		std_out, err := os.Create(exec_commad.OutputFile)
 		if err != nil {
 			return nil, err
 		}
@@ -91,7 +103,12 @@ func get_cmd(command string, dir string, out string, env []string, args ...strin
 		cmd.Stderr = os.Stderr
 	}
 
+	if exec_commad.Input != "" {
+		cmd.Stdin = strings.NewReader(exec_commad.Input)
+	}
+
 	cmd.Env = os.Environ()
+	env := exec_commad.Env
 	if env != nil && len(env) > 0 {
 		for _, e := range env {
 			cmd.Env = append(cmd.Env, e)
