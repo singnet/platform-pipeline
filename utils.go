@@ -17,7 +17,7 @@ type ExecCommand struct {
 	Command    string
 	Directory  string
 	Env        []string
-	Input      string
+	Input      []string
 	OutputFile string
 	Args       []string
 }
@@ -103,8 +103,8 @@ func get_cmd(exec_commad ExecCommand) (*exec.Cmd, error) {
 		cmd.Stderr = os.Stderr
 	}
 
-	if exec_commad.Input != "" {
-		cmd.Stdin = strings.NewReader(exec_commad.Input)
+	if len(exec_commad.Input) > 0 {
+		cmd.Stdin = strings.NewReader(strings.Join(exec_commad.Input, "\n"))
 	}
 
 	cmd.Env = os.Environ()

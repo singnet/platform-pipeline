@@ -13,10 +13,12 @@ var output_file string
 var output_contains_strings []string
 
 var platform_contracts_dir string
+var example_service_dir string
 var snet_config_file string
 
 func init() {
 	platform_contracts_dir = env_singnet_repos + "/platform-contracts"
+	example_service_dir = env_singnet_repos + "/example-service"
 	snet_config_file = env_home + "/.snet/config"
 }
 
@@ -208,11 +210,11 @@ default_ipfs_endpoint = http://localhost:` + to_string(endpoint_ipfs)
 	return append_to_file(snet_config_file, config)
 }
 
-func organizationIsAdded(table *gherkin.DataTable) error {
+func organization_is_added(table *gherkin.DataTable) error {
 
-	organization := get_table_value(table, 1, 0)
-	address := get_table_value(table, 1, 1)
-	member := get_table_value(table, 1, 2)
+	organization := get_table_value(table, "organization")
+	address := get_table_value(table, "address")
+	member := get_table_value(table, "member")
 
 	args := []string{
 		"contract", "Registry",
@@ -224,8 +226,48 @@ func organizationIsAdded(table *gherkin.DataTable) error {
 
 	command := ExecCommand{
 		Command: "snet",
-		Input:   "y\n",
+		Input:   []string{"y"},
 		Args:    args,
+	}
+
+	return run_command(command)
+}
+
+func example_service_is_registered(table *gherkin.DataTable) error {
+
+	name := get_table_value(table, "name")
+	price := get_table_value(table, "price")
+	endpoint := get_table_value(table, "endpoint")
+	tags := get_table_value(table, "tags")
+	description := get_table_value(table, "description")
+
+	command := ExecCommand{
+		Command:   "snet",
+		Directory: example_service_dir,
+		Input:     []string{"", "", name, "", price, endpoint, tags, description},
+		Args:      []string{"service", "init"},
+	}
+
+	return run_command(command)
+}
+
+func example_service_is_published_to_network(table *gherkin.DataTable) error {
+
+	agent_factory_address := get_table_value(table, "agent factory address")
+	registry_address := get_table_value(table, "registry address")
+
+	args := []string{
+		"service", "publish", "local",
+		"--config", "./service.json",
+		"--agent-factory-at", agent_factory_address,
+		"--registry-at", registry_address,
+	}
+
+	command := ExecCommand{
+		Command:   "snet",
+		Directory: example_service_dir,
+		Input:     []string{"y", "y"},
+		Args:      args,
 	}
 
 	return run_command(command)
@@ -240,7 +282,9 @@ func FeatureContext(s *godog.Suite) {
 		identity_is_created_with_user_and_private_key)
 	s.Step(`^snet is configured with Ethereum RPC endpoint (\d+)$`, snet_is_configured_with_ethereum_rpc_endpoint)
 	s.Step(`^snet is configured with IPFS endpoint (\d+)$`, snet_is_configured_with_ipfs_endpoint)
-	s.Step(`^Organization is added:$`, organizationIsAdded)
+	s.Step(`^Organization is added:$`, organization_is_added)
+	s.Step(`^example-service is registered$`, example_service_is_registered)
+	s.Step(`^example-service is published to network$`, example_service_is_published_to_network)
 }
 
 func check_file_contains_strings() (bool, error) {
@@ -270,6 +314,15 @@ func check_file_contains_strings() (bool, error) {
 	return true, nil
 }
 
-func get_table_value(table *gherkin.DataTable, row int, column int) string {
-	return table.Rows[row].Cells[column].Value
+func get_table_value(table *gherkin.DataTable, column string) string {
+
+	names := table.Rows[0].Cells
+	for i, cell := range names {
+		if cell.Value == column {
+			return table.Rows[1].Cells[i].Value
+		}
+	}
+
+	log.Printf("column: %s has not been found in table", column)
+	return ""
 }
