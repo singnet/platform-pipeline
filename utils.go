@@ -45,9 +45,24 @@ func read_file(file string) (string, error) {
 	return string(buf), nil
 }
 
-func append_to_file(file_name string, content string) error {
+func file_exists(file_name string) (bool, error) {
 
-	file, err := os.OpenFile(file_name, os.O_APPEND|os.O_WRONLY, 0600)
+	_, err := os.Stat(file_name)
+
+	if err == nil {
+		return true, nil
+	}
+
+	if os.IsNotExist(err) {
+		return false, nil
+	}
+
+	return true, err
+}
+
+func write_to_file(file_name string, content string) error {
+
+	file, err := os.Create(file_name)
 	if err != nil {
 		return err
 	}
@@ -56,6 +71,43 @@ func append_to_file(file_name string, content string) error {
 
 	_, err = file.WriteString(content)
 	return err
+}
+
+func append_to_file(file_name string, content string) error {
+
+	file, err := os.OpenFile(file_name, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0600)
+	if err != nil {
+		return err
+	}
+
+	defer file.Close()
+
+	_, err = file.WriteString(content)
+	return err
+}
+
+func link_file(file_from string, file_to string) error {
+
+	exists, err := file_exists(file_to)
+
+	if err != nil {
+		return err
+	}
+
+	if exists {
+		return nil
+	}
+
+	command := ExecCommand{
+		Command: "ln",
+		Args: []string{
+			"-s",
+			file_from,
+			file_to,
+		},
+	}
+
+	return run_command(command)
 }
 
 func run_command(exec_commad ExecCommand) error {

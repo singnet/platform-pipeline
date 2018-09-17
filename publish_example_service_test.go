@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"github.com/DATA-DOG/godog"
 	"github.com/DATA-DOG/godog/gherkin"
 	"log"
@@ -273,6 +274,79 @@ func example_service_is_published_to_network(table *gherkin.DataTable) error {
 	return run_command(command)
 }
 
+func exampleservice_is_run_with_snet_daemon(table *gherkin.DataTable) error {
+
+	daemon_port := get_table_value(table, "daemon port")
+	ethereum_endpoint_port := get_table_value(table, "ethereum endpoint port")
+	passthrough_endpoint_port := get_table_value(table, "passthrough endpoint port")
+
+	agent_contract_address := get_table_value(table, "agent contract address")
+	private_key := get_table_value(table, "private key")
+
+	snetd_config_template := `
+	{
+    "AGENT_CONTRACT_ADDRESS": "%s",
+    "AUTO_SSL_DOMAIN": "",
+    "AUTO_SSL_CACHE_DIR": "",
+    "BLOCKCHAIN_ENABLED": true,
+    "CONFIG_PATH": "",
+    "DAEMON_LISTENING_PORT": %s,
+    "DAEMON_TYPE": "grpc",
+    "DB_PATH": "./db",
+    "ETHEREUM_JSON_RPC_ENDPOINT": "http://localhost:%s",
+    "EXECUTABLE_PATH": "",
+    "LOG_LEVEL": 5,
+    "PASSTHROUGH_ENABLED": true,
+    "PASSTHROUGH_ENDPOINT": "http://localhost:%s",
+    "POLL_SLEEP": "",
+    "PRIVATE_KEY": "%s",
+    "SERVICE_TYPE": "jsonrpc",
+    "SSL_CERT": "",
+    "SSL_KEY": "",
+    "WIRE_ENCODING": "json"
+    }`
+
+	snetd_config := fmt.Sprintf(snetd_config_template,
+		agent_contract_address, daemon_port, ethereum_endpoint_port, passthrough_endpoint_port, private_key)
+
+	file := example_service_dir + "/snetd.config.json"
+	err := write_to_file(file, snetd_config)
+
+	if err != nil {
+		return err
+	}
+
+	link_file(env_singnet_repos+"/snet-daemon/build/snetd-linux-amd64", example_service_dir+"/snetd-linux-amd64")
+
+	output_file = log_path + "/example-service.log"
+	output_contains_strings = []string{}
+
+	command := ExecCommand{
+		Command:    example_service_dir + "/scripts/run-snet-service",
+		Directory:  example_service_dir,
+		OutputFile: output_file,
+	}
+
+	err = run_command_async(command)
+
+	if err != nil {
+		return err
+	}
+
+	_, err = check_with_timeout(check_file_contains_strings)
+
+	if err != nil {
+		return err
+	}
+
+	command = ExecCommand{
+		Command:   example_service_dir + "/scripts/test-call",
+		Directory: example_service_dir,
+	}
+
+	return run_command(command)
+}
+
 func FeatureContext(s *godog.Suite) {
 	s.Step(`^Ethereum network is running on port (\d+)$`, ethereum_network_is_running_on_port)
 	s.Step(`^Contracts are deployed using Truffle$`, contracts_are_deployed_using_truffle)
@@ -285,6 +359,8 @@ func FeatureContext(s *godog.Suite) {
 	s.Step(`^Organization is added:$`, organization_is_added)
 	s.Step(`^example-service is registered$`, example_service_is_registered)
 	s.Step(`^example-service is published to network$`, example_service_is_published_to_network)
+	s.Step(`^example-service is run with snet-daemon$`, exampleservice_is_run_with_snet_daemon)
+
 }
 
 func check_file_contains_strings() (bool, error) {

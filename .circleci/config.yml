@@ -52,7 +52,7 @@ jobs:
           git clone https://github.com/singnet/snet-daemon.git
           cd snet-daemon
           ./scripts/install
-          ./scripts/build
+          ./scripts/build linux amd64
     - run:
         name: Build example-service
         command: |
