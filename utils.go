@@ -33,7 +33,7 @@ func init() {
 	env_singnet_repos = os.Getenv("SINGNET_REPOS")
 	env_go_path = os.Getenv("GOPATH")
 	log_path = env_go_path + "/log"
-	log.Printf("SINGNET_REPOS=%s%\n", env_singnet_repos)
+	log.Printf("SINGNET_REPOS=%s\n", env_singnet_repos)
 }
 
 func read_file(file string) (string, error) {
