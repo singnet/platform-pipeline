@@ -6,7 +6,6 @@ import (
 	"github.com/DATA-DOG/godog"
 	"github.com/DATA-DOG/godog/gherkin"
 	"log"
-	"strconv"
 	"strings"
 	"time"
 )
@@ -27,7 +26,7 @@ func init() {
 func ethereum_network_is_running_on_port(port int) error {
 
 	output_file = log_path + "/ganache.log"
-	output_contains_strings = []string{"Listening on 127.0.0.1:" + strconv.Itoa(port)}
+	output_contains_strings = []string{"Listening on 127.0.0.1:" + to_string(port)}
 
 	args := []string{"--mnemonic", "gauge enact biology destroy normal tunnel slight slide wide sauce ladder produce"}
 	command := ExecCommand{
@@ -98,7 +97,7 @@ func ipfs_is_runnig(port_api int, port_gateway int) error {
 		return err
 	}
 
-	address_api := "/ip4/127.0.0.1/tcp/" + strconv.Itoa(port_api)
+	address_api := "/ip4/127.0.0.1/tcp/" + to_string(port_api)
 	command.Args = []string{"config", "Addresses.API", address_api}
 	err = run_command(command)
 
@@ -106,7 +105,7 @@ func ipfs_is_runnig(port_api int, port_gateway int) error {
 		return err
 	}
 
-	address_gateway := "/ip4/0.0.0.0/tcp/" + strconv.Itoa(port_gateway)
+	address_gateway := "/ip4/0.0.0.0/tcp/" + to_string(port_gateway)
 	command.Args = []string{"config", "Addresses.Gateway", address_gateway}
 	err = run_command(command)
 
