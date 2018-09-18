@@ -1,0 +1,62 @@
+version: 2
+jobs:
+  build:
+    docker:
+    - image: ubuntu:latest
+    working_directory: /root/go/src/github.com/singnet
+    environment:
+      GOPATH: /root/go
+      SINGNET_REPOS: /root/go/src/github.com/singnet
+    steps:
+    - run:
+        name: Install tools
+        command: |
+          export PATH=$PATH:$GOPATH/bin
+          apt-get update
+          apt-get -y install sudo wget git
+          # Install NodeJS toolset
+          sudo apt-get -y install nodejs npm
+          # install protobuf
+          sudo apt-get -y install golang go-dep golang-goprotobuf-dev golint
+          # install IPFS
+          wget https://dist.ipfs.io/go-ipfs/v0.4.17/go-ipfs_v0.4.17_linux-amd64.tar.gz
+          tar xvfz go-ipfs_*.tar.gz
+          cp ./go-ipfs/ipfs $GOPATH/bin
+          # Installl Python
+          sudo apt-get -y install python3 python3-pip
+          # Install other
+          sudo apt-get -y install libudev-dev libusb-1.0-0-dev
+    - run:
+        name: Build platform-contracts
+        command: |
+          cd $SINGNET_REPOS
+          git clone https://github.com/singnet/platform-contracts.git
+          cd platform-contracts
+          npm install
+          npm install ganache-cli
+    - run:
+        name: Build snet-cli
+        command: |
+          cd $SINGNET_REPOS
+          git clone https://github.com/singnet/snet-cli.git
+          cd snet-cli
+          ./scripts/blockchain install
+          pip3 install -e .
+    - run:
+        name: Build snet-daemon
+        command: |
+          export PATH=$PATH:$GOPATH/bin
+          rm -rf $GOPATH/bin
+          cd $SINGNET_REPOS
+          git clone https://github.com/singnet/snet-daemon.git
+          cd snet-daemon
+          ./scripts/install
+          ./scripts/build linux amd64
+    - run:
+        name: Build example-service
+        command: |
+          export PATH=$PATH:$GOPATH/bin
+          cd $SINGNET_REPOS
+          git clone https://github.com/singnet/example-service.git
+          cd example-service
+          pip3 install -r requirements.txt
