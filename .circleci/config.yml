@@ -73,7 +73,7 @@ jobs:
           cd resources/blockchain
           npm install $SINGNET_REPOS/token-contracts/build/npm-module
           npm install $SINGNET_REPOS/platform-contracts/build/npm-module
-          cd ..
+          cd ../..
           ./scripts/install
           ./scripts/build linux amd64
     - run:
