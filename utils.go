@@ -171,15 +171,19 @@ func getCmd(execCommad ExecCommand) (*exec.Cmd, error) {
 	return cmd, nil
 }
 
-func checkWithTimeout(f checkWithTimeoutType) (bool, error) {
-	timeout := time.After(5 * time.Second)
-	tick := time.Tick(500 * time.Millisecond)
+// timeout and tick are measurd in milliseconds units
+func checkWithTimeout(timeout time.Duration,
+	tick time.Duration,
+	f checkWithTimeoutType) (bool, error) {
+
+	_timeout := time.After(timeout * time.Millisecond)
+	_tick := time.Tick(tick * time.Millisecond)
 
 	for {
 		select {
-		case <-timeout:
+		case <-_timeout:
 			return false, errors.New("timed out")
-		case <-tick:
+		case <-_tick:
 			ok, err := f()
 			if err != nil {
 				return false, err

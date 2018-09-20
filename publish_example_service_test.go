@@ -43,7 +43,7 @@ func ethereumNetworkIsRunningOnPort(port int) error {
 		return err
 	}
 
-	exists, err := checkWithTimeout(checkFileContainsStrings)
+	exists, err := checkWithTimeout(5000, 500, checkFileContainsStrings)
 	if err != nil {
 		return err
 	}
@@ -128,7 +128,7 @@ func ipfsIsRunning(portAPI int, portGateway int) error {
 		"server listening on " + addressAPI,
 		"server listening on " + addressGateway,
 	}
-	exists, err := checkWithTimeout(checkFileContainsStrings)
+	exists, err := checkWithTimeout(5000, 500, checkFileContainsStrings)
 
 	if err != nil {
 		return err
@@ -181,7 +181,7 @@ default_eth_rpc_endpoint = http://localhost:` + toString(endpointEthereumRPC)
 
 	outputFile = snetConfigFile
 	outputContainsStrings = []string{"session"}
-	exists, e := checkWithTimeout(checkFileContainsStrings)
+	exists, e := checkWithTimeout(5000, 500, checkFileContainsStrings)
 
 	if !exists {
 		return errors.New("snet config file is not created: " + snetConfigFile)
@@ -332,7 +332,7 @@ func exampleserviceIsRunWithSnetdaemon(table *gherkin.DataTable) error {
 		return err
 	}
 
-	_, err = checkWithTimeout(checkFileContainsStrings)
+	_, err = checkWithTimeout(5000, 500, checkFileContainsStrings)
 
 	if err != nil {
 		return err

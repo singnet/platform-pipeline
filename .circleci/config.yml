@@ -91,4 +91,6 @@ jobs:
           export PATH=$PATH:$GOPATH/bin
           mkdir $GOPATH/log
           go get github.com/DATA-DOG/godog/cmd/godog
+          # Disable TensorFlow warnings wich pollute example-service log file
+          export TF_CPP_MIN_LOG_LEVEL=2
           godog
