@@ -29,19 +29,37 @@ jobs:
           # Install other
           sudo apt-get -y install libudev-dev libusb-1.0-0-dev
     - run:
+        name: Build token-contracts
+        command: |
+          cd $SINGNET_REPOS
+          git https://github.com/singnet/token-contracts.git
+          cd token-contracts
+          npm install
+          npm run-script compile
+          npm run-script package-npm
+    - run:
         name: Build platform-contracts
         command: |
           cd $SINGNET_REPOS
           git clone https://github.com/singnet/platform-contracts.git
           cd platform-contracts
-          npm install
           npm install ganache-cli
+          # install token-contracts from local dir
+          npm install $SINGNET_REPOS/token-contracts/build/npm-module
+          npm install
+          npm run-script compile
+          npm run-script package-npm
     - run:
         name: Build snet-cli
         command: |
           cd $SINGNET_REPOS
           git clone https://github.com/singnet/snet-cli.git
           cd snet-cli
+          # install token-contracts and platform-contracts from local dir
+          cd blockchain/
+          npm install $SINGNET_REPOS/token-contracts/build/npm-module
+          npm install $SINGNET_REPOS/platform-contracts/build/npm-module
+          cd ..
           ./scripts/blockchain install
           pip3 install -e .
     - run:
@@ -51,6 +69,11 @@ jobs:
           cd $SINGNET_REPOS
           git clone https://github.com/singnet/snet-daemon.git
           cd snet-daemon
+          # install token-contracts and platform-contracts from local dir
+          cd resources/blockchain
+          npm install $SINGNET_REPOS/token-contracts/build/npm-module
+          npm install $SINGNET_REPOS/platform-contracts/build/npm-module
+          cd ..
           ./scripts/install
           ./scripts/build linux amd64
     - run:
