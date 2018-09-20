@@ -11,8 +11,9 @@ import (
 	"time"
 )
 
-type check_with_timeout_type func() (bool, error)
+type checkWithTimeoutType func() (bool, error)
 
+// ExecCommand is used to run command from command line
 type ExecCommand struct {
 	Command    string
 	Directory  string
@@ -22,21 +23,21 @@ type ExecCommand struct {
 	Args       []string
 }
 
-var env_home string
-var env_singnet_repos string
-var env_go_path string
-var log_path string
+var envHome string
+var envSingnetRepos string
+var envGoPath string
+var logPath string
 
 func init() {
 
-	env_home = os.Getenv("HOME")
-	env_singnet_repos = os.Getenv("SINGNET_REPOS")
-	env_go_path = os.Getenv("GOPATH")
-	log_path = env_go_path + "/log"
-	log.Printf("SINGNET_REPOS=%s\n", env_singnet_repos)
+	envHome = os.Getenv("HOME")
+	envSingnetRepos = os.Getenv("SINGNET_REPOS")
+	envGoPath = os.Getenv("GOPATH")
+	logPath = envGoPath + "/log"
+	log.Printf("SINGNET_REPOS=%s\n", envSingnetRepos)
 }
 
-func read_file(file string) (string, error) {
+func readFile(file string) (string, error) {
 
 	buf, err := ioutil.ReadFile(file)
 	if err != nil {
@@ -45,9 +46,9 @@ func read_file(file string) (string, error) {
 	return string(buf), nil
 }
 
-func file_exists(file_name string) (bool, error) {
+func fileExists(fileName string) (bool, error) {
 
-	_, err := os.Stat(file_name)
+	_, err := os.Stat(fileName)
 
 	if err == nil {
 		return true, nil
@@ -60,9 +61,9 @@ func file_exists(file_name string) (bool, error) {
 	return true, err
 }
 
-func write_to_file(file_name string, content string) error {
+func writeToFile(fileName string, content string) error {
 
-	file, err := os.Create(file_name)
+	file, err := os.Create(fileName)
 	if err != nil {
 		return err
 	}
@@ -73,9 +74,9 @@ func write_to_file(file_name string, content string) error {
 	return err
 }
 
-func append_to_file(file_name string, content string) error {
+func appendToFile(fileName string, content string) error {
 
-	file, err := os.OpenFile(file_name, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0600)
+	file, err := os.OpenFile(fileName, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0600)
 	if err != nil {
 		return err
 	}
@@ -86,9 +87,9 @@ func append_to_file(file_name string, content string) error {
 	return err
 }
 
-func link_file(file_from string, file_to string) error {
+func linkFile(fileName string, fileTo string) error {
 
-	exists, err := file_exists(file_to)
+	exists, err := fileExists(fileTo)
 
 	if err != nil {
 		return err
@@ -102,20 +103,20 @@ func link_file(file_from string, file_to string) error {
 		Command: "ln",
 		Args: []string{
 			"-s",
-			file_from,
-			file_to,
+			fileName,
+			fileTo,
 		},
 	}
 
-	return run_command(command)
+	return runCommand(command)
 }
 
-func run_command(exec_commad ExecCommand) error {
+func runCommand(execCommad ExecCommand) error {
 
 	log.Printf("[run_command] dir: '%s', command: '%s', args: '%s'\n",
-		exec_commad.Directory, exec_commad.Command, strings.Join(exec_commad.Args, ","))
+		execCommad.Directory, execCommad.Command, strings.Join(execCommad.Args, ","))
 
-	cmd, err := get_cmd(exec_commad)
+	cmd, err := getCmd(execCommad)
 
 	if err != nil {
 		return err
@@ -124,12 +125,12 @@ func run_command(exec_commad ExecCommand) error {
 	return cmd.Run()
 }
 
-func run_command_async(exec_commad ExecCommand) error {
+func runCommandAsync(execCommad ExecCommand) error {
 
 	log.Printf("[run_command_async] dir: '%s', command: '%s', args: '%s'\n",
-		exec_commad.Directory, exec_commad.Command, strings.Join(exec_commad.Args, ","))
+		execCommad.Directory, execCommad.Command, strings.Join(execCommad.Args, ","))
 
-	cmd, err := get_cmd(exec_commad)
+	cmd, err := getCmd(execCommad)
 
 	if err != nil {
 		return err
@@ -138,29 +139,29 @@ func run_command_async(exec_commad ExecCommand) error {
 	return cmd.Start()
 }
 
-func get_cmd(exec_commad ExecCommand) (*exec.Cmd, error) {
+func getCmd(execCommad ExecCommand) (*exec.Cmd, error) {
 
-	cmd := exec.Command(exec_commad.Command, exec_commad.Args...)
-	cmd.Dir = exec_commad.Directory
+	cmd := exec.Command(execCommad.Command, execCommad.Args...)
+	cmd.Dir = execCommad.Directory
 
-	if exec_commad.OutputFile != "" {
-		std_out, err := os.Create(exec_commad.OutputFile)
+	if execCommad.OutputFile != "" {
+		stdOut, err := os.Create(execCommad.OutputFile)
 		if err != nil {
 			return nil, err
 		}
-		cmd.Stdout = std_out
-		cmd.Stderr = std_out
+		cmd.Stdout = stdOut
+		cmd.Stderr = stdOut
 	} else {
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
 	}
 
-	if len(exec_commad.Input) > 0 {
-		cmd.Stdin = strings.NewReader(strings.Join(exec_commad.Input, "\n"))
+	if len(execCommad.Input) > 0 {
+		cmd.Stdin = strings.NewReader(strings.Join(execCommad.Input, "\n"))
 	}
 
 	cmd.Env = os.Environ()
-	env := exec_commad.Env
+	env := execCommad.Env
 	if env != nil && len(env) > 0 {
 		for _, e := range env {
 			cmd.Env = append(cmd.Env, e)
@@ -170,7 +171,7 @@ func get_cmd(exec_commad ExecCommand) (*exec.Cmd, error) {
 	return cmd, nil
 }
 
-func check_with_timeout(f check_with_timeout_type) (bool, error) {
+func checkWithTimeout(f checkWithTimeoutType) (bool, error) {
 	timeout := time.After(5 * time.Second)
 	tick := time.Tick(500 * time.Millisecond)
 
@@ -189,6 +190,6 @@ func check_with_timeout(f check_with_timeout_type) (bool, error) {
 	}
 }
 
-func to_string(value int) string {
+func toString(value int) string {
 	return strconv.Itoa(value)
 }

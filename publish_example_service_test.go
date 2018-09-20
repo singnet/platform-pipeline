@@ -3,80 +3,81 @@ package main
 import (
 	"errors"
 	"fmt"
-	"github.com/DATA-DOG/godog"
-	"github.com/DATA-DOG/godog/gherkin"
 	"log"
 	"strings"
 	"time"
+
+	"github.com/DATA-DOG/godog"
+	"github.com/DATA-DOG/godog/gherkin"
 )
 
-var output_file string
-var output_contains_strings []string
+var outputFile string
+var outputContainsStrings []string
 
-var platform_contracts_dir string
-var example_service_dir string
-var snet_config_file string
+var platformContractsDir string
+var exampleServiceDir string
+var snetConfigFile string
 
 func init() {
-	platform_contracts_dir = env_singnet_repos + "/platform-contracts"
-	example_service_dir = env_singnet_repos + "/example-service"
-	snet_config_file = env_home + "/.snet/config"
+	platformContractsDir = envSingnetRepos + "/platform-contracts"
+	exampleServiceDir = envSingnetRepos + "/example-service"
+	snetConfigFile = envHome + "/.snet/config"
 }
 
-func ethereum_network_is_running_on_port(port int) error {
+func ethereumNetworkIsRunningOnPort(port int) error {
 
-	output_file = log_path + "/ganache.log"
-	output_contains_strings = []string{"Listening on 127.0.0.1:" + to_string(port)}
+	outputFile = logPath + "/ganache.log"
+	outputContainsStrings = []string{"Listening on 127.0.0.1:" + toString(port)}
 
 	args := []string{"--mnemonic", "gauge enact biology destroy normal tunnel slight slide wide sauce ladder produce"}
 	command := ExecCommand{
 		Command:    "./node_modules/.bin/ganache-cli",
-		Directory:  platform_contracts_dir,
-		OutputFile: output_file,
+		Directory:  platformContractsDir,
+		OutputFile: outputFile,
 		Args:       args,
 	}
 
-	err := run_command_async(command)
+	err := runCommandAsync(command)
 
 	if err != nil {
 		return err
 	}
 
-	exists, err := check_with_timeout(check_file_contains_strings)
+	exists, err := checkWithTimeout(checkFileContainsStrings)
 	if err != nil {
 		return err
 	}
 
 	if !exists {
-		errors.New("Etherium networks is not started!")
+		return errors.New("Etherium networks is not started")
 	}
 
 	return nil
 }
 
-func contracts_are_deployed_using_truffle() error {
+func contractsAreDeployedUsingTruffle() error {
 
 	command := ExecCommand{
 		Command:   "./node_modules/.bin/truffle",
-		Directory: platform_contracts_dir,
+		Directory: platformContractsDir,
 		Args:      []string{"compile"},
 	}
 
-	err := run_command(command)
+	err := runCommand(command)
 
 	if err != nil {
 		return err
 	}
 
 	command.Args = []string{"migrate", "--network", "local"}
-	err = run_command(command)
+	err = runCommand(command)
 
 	return err
 }
 
-func ipfs_is_runnig(port_api int, port_gateway int) error {
+func ipfsIsRunning(portAPI int, portGateway int) error {
 
-	env := []string{"IPFS_PATH=" + env_go_path + "/ipfs"}
+	env := []string{"IPFS_PATH=" + envGoPath + "/ipfs"}
 
 	command := ExecCommand{
 		Command: "ipfs",
@@ -84,87 +85,85 @@ func ipfs_is_runnig(port_api int, port_gateway int) error {
 		Args:    []string{"init"},
 	}
 
-	err := run_command(command)
+	err := runCommand(command)
 
 	if err != nil {
 		return err
 	}
 
 	command.Args = []string{"bootstrap", "rm", "--all"}
-	err = run_command(command)
+	err = runCommand(command)
 
 	if err != nil {
 		return err
 	}
 
-	address_api := "/ip4/127.0.0.1/tcp/" + to_string(port_api)
-	command.Args = []string{"config", "Addresses.API", address_api}
-	err = run_command(command)
+	addressAPI := "/ip4/127.0.0.1/tcp/" + toString(portAPI)
+	command.Args = []string{"config", "Addresses.API", addressAPI}
+	err = runCommand(command)
 
 	if err != nil {
 		return err
 	}
 
-	address_gateway := "/ip4/0.0.0.0/tcp/" + to_string(port_gateway)
-	command.Args = []string{"config", "Addresses.Gateway", address_gateway}
-	err = run_command(command)
+	addressGateway := "/ip4/0.0.0.0/tcp/" + toString(portGateway)
+	command.Args = []string{"config", "Addresses.Gateway", addressGateway}
+	err = runCommand(command)
 
 	if err != nil {
 		return err
 	}
 
-	output_file = log_path + "/ipfs.log"
-	command.OutputFile = output_file
+	outputFile = logPath + "/ipfs.log"
+	command.OutputFile = outputFile
 	command.Args = []string{"daemon"}
-	err = run_command_async(command)
+	err = runCommandAsync(command)
 
 	if err != nil {
 		return err
 	}
 
-	output_contains_strings = []string{
+	outputContainsStrings = []string{
 		"Daemon is ready",
-		"server listening on " + address_api,
-		"server listening on " + address_gateway,
+		"server listening on " + addressAPI,
+		"server listening on " + addressGateway,
 	}
-	exists, err := check_with_timeout(check_file_contains_strings)
+	exists, err := checkWithTimeout(checkFileContainsStrings)
 
 	if err != nil {
 		return err
 	}
 
 	if !exists {
-		errors.New("Etherium networks is not started!")
+		return errors.New("Etherium networks is not started")
 	}
 
 	return nil
 }
 
-func identity_is_created_with_user_and_private_key(user string, private_key string) error {
+func identityIsCreatedWithUserAndPrivateKey(user string, privateKey string) error {
 
 	command := ExecCommand{
 		Command: "snet",
-		Args:    []string{"identity", "create", user, "key", "--private-key", private_key},
+		Args:    []string{"identity", "create", user, "key", "--private-key", privateKey},
 	}
-	err := run_command(command)
+	err := runCommand(command)
 
 	if err != nil {
 		return err
 	}
 
 	command.Args = []string{"identity", "snet-user"}
-	err = run_command(command)
-
-	return err
+	return runCommand(command)
 }
 
-func snet_is_configured_with_ethereum_rpc_endpoint(endpoint_ethereum_rpc int) error {
+func snetIsConfiguredWithEthereumRPCEndpoint(endpointEthereumRPC int) error {
 
 	config := `
 [network.local]
-default_eth_rpc_endpoint = http://localhost:` + to_string(endpoint_ethereum_rpc)
+default_eth_rpc_endpoint = http://localhost:` + toString(endpointEthereumRPC)
 
-	err := append_to_file(snet_config_file, config)
+	err := appendToFile(snetConfigFile, config)
 
 	if err != nil {
 		return err
@@ -174,31 +173,31 @@ default_eth_rpc_endpoint = http://localhost:` + to_string(endpoint_ethereum_rpc)
 		Command: "snet",
 		Args:    []string{"network", "local"},
 	}
-	err = run_command(command)
+	err = runCommand(command)
 
 	if err != nil {
 		return err
 	}
 
-	output_file = snet_config_file
-	output_contains_strings = []string{"session"}
-	exists, e := check_with_timeout(check_file_contains_strings)
+	outputFile = snetConfigFile
+	outputContainsStrings = []string{"session"}
+	exists, e := checkWithTimeout(checkFileContainsStrings)
 
 	if !exists {
-		return errors.New("snet config file is not created: " + snet_config_file)
+		return errors.New("snet config file is not created: " + snetConfigFile)
 	}
 
 	return e
 }
 
-func snet_is_configured_with_ipfs_endpoint(endpoint_ipfs int) error {
+func snetIsConfiguredWithIPFSEndpoint(endpointIPFS int) error {
 
 	command := ExecCommand{
 		Command: "sed",
-		Args:    []string{"-ie", "/ipfs/,+2d", snet_config_file},
+		Args:    []string{"-ie", "/ipfs/,+2d", snetConfigFile},
 	}
 
-	err := run_command(command)
+	err := runCommand(command)
 
 	if err != nil {
 		return err
@@ -206,16 +205,16 @@ func snet_is_configured_with_ipfs_endpoint(endpoint_ipfs int) error {
 
 	config := `
 [ipfs]
-default_ipfs_endpoint = http://localhost:` + to_string(endpoint_ipfs)
+default_ipfs_endpoint = http://localhost:` + toString(endpointIPFS)
 
-	return append_to_file(snet_config_file, config)
+	return appendToFile(snetConfigFile, config)
 }
 
-func organization_is_added(table *gherkin.DataTable) error {
+func organizationIsAdded(table *gherkin.DataTable) error {
 
-	organization := get_table_value(table, "organization")
-	address := get_table_value(table, "address")
-	member := get_table_value(table, "member")
+	organization := getTableValue(table, "organization")
+	address := getTableValue(table, "address")
+	member := getTableValue(table, "member")
 
 	args := []string{
 		"contract", "Registry",
@@ -231,59 +230,59 @@ func organization_is_added(table *gherkin.DataTable) error {
 		Args:    args,
 	}
 
-	return run_command(command)
+	return runCommand(command)
 }
 
-func example_service_is_registered(table *gherkin.DataTable) error {
+func exampleserviceIsRegistered(table *gherkin.DataTable) error {
 
-	name := get_table_value(table, "name")
-	price := get_table_value(table, "price")
-	endpoint := get_table_value(table, "endpoint")
-	tags := get_table_value(table, "tags")
-	description := get_table_value(table, "description")
+	name := getTableValue(table, "name")
+	price := getTableValue(table, "price")
+	endpoint := getTableValue(table, "endpoint")
+	tags := getTableValue(table, "tags")
+	description := getTableValue(table, "description")
 
 	command := ExecCommand{
 		Command:   "snet",
-		Directory: example_service_dir,
+		Directory: exampleServiceDir,
 		Input:     []string{"", "", name, "", price, endpoint, tags, description},
 		Args:      []string{"service", "init"},
 	}
 
-	return run_command(command)
+	return runCommand(command)
 }
 
-func example_service_is_published_to_network(table *gherkin.DataTable) error {
+func exampleserviceIsPublishedToNetwork(table *gherkin.DataTable) error {
 
-	agent_factory_address := get_table_value(table, "agent factory address")
-	registry_address := get_table_value(table, "registry address")
+	agentFactoryAddress := getTableValue(table, "agent factory address")
+	registryAddress := getTableValue(table, "registry address")
 
 	args := []string{
 		"service", "publish", "local",
 		"--config", "./service.json",
-		"--agent-factory-at", agent_factory_address,
-		"--registry-at", registry_address,
+		"--agent-factory-at", agentFactoryAddress,
+		"--registry-at", registryAddress,
 	}
 
 	command := ExecCommand{
 		Command:   "snet",
-		Directory: example_service_dir,
+		Directory: exampleServiceDir,
 		Input:     []string{"y", "y"},
 		Args:      args,
 	}
 
-	return run_command(command)
+	return runCommand(command)
 }
 
-func exampleservice_is_run_with_snet_daemon(table *gherkin.DataTable) error {
+func exampleserviceIsRunWithSnetdaemon(table *gherkin.DataTable) error {
 
-	daemon_port := get_table_value(table, "daemon port")
-	ethereum_endpoint_port := get_table_value(table, "ethereum endpoint port")
-	passthrough_endpoint_port := get_table_value(table, "passthrough endpoint port")
+	daemonPort := getTableValue(table, "daemon port")
+	ethereumEndpointPort := getTableValue(table, "ethereum endpoint port")
+	passthroughEndpointPort := getTableValue(table, "passthrough endpoint port")
 
-	agent_contract_address := get_table_value(table, "agent contract address")
-	private_key := get_table_value(table, "private key")
+	agentContractAddress := getTableValue(table, "agent contract address")
+	privateKey := getTableValue(table, "private key")
 
-	snetd_config_template := `
+	snetdConfigTemplate := `
 	{
     "AGENT_CONTRACT_ADDRESS": "%s",
     "AUTO_SSL_DOMAIN": "",
@@ -306,34 +305,34 @@ func exampleservice_is_run_with_snet_daemon(table *gherkin.DataTable) error {
     "WIRE_ENCODING": "json"
     }`
 
-	snetd_config := fmt.Sprintf(snetd_config_template,
-		agent_contract_address, daemon_port, ethereum_endpoint_port, passthrough_endpoint_port, private_key)
+	snetdConfig := fmt.Sprintf(snetdConfigTemplate,
+		agentContractAddress, daemonPort, ethereumEndpointPort, passthroughEndpointPort, privateKey)
 
-	file := example_service_dir + "/snetd.config.json"
-	err := write_to_file(file, snetd_config)
+	file := exampleServiceDir + "/snetd.config.json"
+	err := writeToFile(file, snetdConfig)
 
 	if err != nil {
 		return err
 	}
 
-	link_file(env_singnet_repos+"/snet-daemon/build/snetd-linux-amd64", example_service_dir+"/snetd-linux-amd64")
+	linkFile(envSingnetRepos+"/snet-daemon/build/snetd-linux-amd64", exampleServiceDir+"/snetd-linux-amd64")
 
-	output_file = log_path + "/example-service.log"
-	output_contains_strings = []string{}
+	outputFile = logPath + "/example-service.log"
+	outputContainsStrings = []string{}
 
 	command := ExecCommand{
-		Command:    example_service_dir + "/scripts/run-snet-service",
-		Directory:  example_service_dir,
-		OutputFile: output_file,
+		Command:    exampleServiceDir + "/scripts/run-snet-service",
+		Directory:  exampleServiceDir,
+		OutputFile: outputFile,
 	}
 
-	err = run_command_async(command)
+	err = runCommandAsync(command)
 
 	if err != nil {
 		return err
 	}
 
-	_, err = check_with_timeout(check_file_contains_strings)
+	_, err = checkWithTimeout(checkFileContainsStrings)
 
 	if err != nil {
 		return err
@@ -342,35 +341,35 @@ func exampleservice_is_run_with_snet_daemon(table *gherkin.DataTable) error {
 	time.Sleep(2 * time.Second)
 
 	command = ExecCommand{
-		Command:   example_service_dir + "/scripts/test-call",
-		Directory: example_service_dir,
+		Command:   exampleServiceDir + "/scripts/test-call",
+		Directory: exampleServiceDir,
 	}
 
-	return run_command(command)
+	return runCommand(command)
 }
 
-func singularitynet_job_is_created(table *gherkin.DataTable) error {
+func singularityNETJobIsCreated(table *gherkin.DataTable) error {
 
-	agent_contract_address := get_table_value(table, "agent contract address")
-	max_price := get_table_value(table, "max price")
+	agentContractAddress := getTableValue(table, "agent contract address")
+	maxPrice := getTableValue(table, "max price")
 
 	args := []string{
 		"agent",
-		"--at", agent_contract_address,
+		"--at", agentContractAddress,
 		"create-jobs",
 		"--funded",
 		"--signed",
-		"--max-price", max_price,
+		"--max-price", maxPrice,
 	}
 
 	command := ExecCommand{
 		Command:   "snet",
-		Directory: example_service_dir,
+		Directory: exampleServiceDir,
 		Input:     []string{"y", "y", "y"},
 		Args:      args,
 	}
 
-	err := run_command(command)
+	err := runCommand(command)
 
 	if err != nil {
 		return err
@@ -378,44 +377,41 @@ func singularitynet_job_is_created(table *gherkin.DataTable) error {
 
 	args = []string{
 		"client", "call", "classify",
-		fmt.Sprintf(`{"image_type": "jpg", "image": "%s"}`, test_image),
-		"--agent-at", agent_contract_address,
+		fmt.Sprintf(`{"image_type": "jpg", "image": "%s"}`, testImage),
+		"--agent-at", agentContractAddress,
 	}
 
 	command = ExecCommand{
 		Command:   "snet",
-		Directory: example_service_dir,
+		Directory: exampleServiceDir,
 		Args:      args,
 	}
 
-	return run_command(command)
-
-	return nil
+	return runCommand(command)
 }
 
 func FeatureContext(s *godog.Suite) {
-	s.Step(`^Ethereum network is running on port (\d+)$`, ethereum_network_is_running_on_port)
-	s.Step(`^Contracts are deployed using Truffle$`, contracts_are_deployed_using_truffle)
-	s.Step(`^IPFS is running$`, ipfs_is_runnig)
-	s.Step(`^IPFS is running with API port (\d+) and Gateway port (\d+)$`, ipfs_is_runnig)
+	s.Step(`^Ethereum network is running on port (\d+)$`, ethereumNetworkIsRunningOnPort)
+	s.Step(`^Contracts are deployed using Truffle$`, contractsAreDeployedUsingTruffle)
+	s.Step(`^IPFS is running with API port (\d+) and Gateway port (\d+)$`, ipfsIsRunning)
 	s.Step(`^Identity is created with user "([^"]*)" and private key "([^"]*)"$`,
-		identity_is_created_with_user_and_private_key)
-	s.Step(`^snet is configured with Ethereum RPC endpoint (\d+)$`, snet_is_configured_with_ethereum_rpc_endpoint)
-	s.Step(`^snet is configured with IPFS endpoint (\d+)$`, snet_is_configured_with_ipfs_endpoint)
-	s.Step(`^Organization is added:$`, organization_is_added)
-	s.Step(`^example-service is registered$`, example_service_is_registered)
-	s.Step(`^example-service is published to network$`, example_service_is_published_to_network)
-	s.Step(`^example-service is run with snet-daemon$`, exampleservice_is_run_with_snet_daemon)
-	s.Step(`^SingularityNET job is created$`, singularitynet_job_is_created)
+		identityIsCreatedWithUserAndPrivateKey)
+	s.Step(`^snet is configured with Ethereum RPC endpoint (\d+)$`, snetIsConfiguredWithEthereumRPCEndpoint)
+	s.Step(`^snet is configured with IPFS endpoint (\d+)$`, snetIsConfiguredWithIPFSEndpoint)
+	s.Step(`^Organization is added:$`, organizationIsAdded)
+	s.Step(`^example-service is registered$`, exampleserviceIsRegistered)
+	s.Step(`^example-service is published to network$`, exampleserviceIsPublishedToNetwork)
+	s.Step(`^example-service is run with snet-daemon$`, exampleserviceIsRunWithSnetdaemon)
+	s.Step(`^SingularityNET job is created$`, singularityNETJobIsCreated)
 
 }
 
-func check_file_contains_strings() (bool, error) {
+func checkFileContainsStrings() (bool, error) {
 
-	log.Printf("check output file: '%s'\n", output_file)
-	log.Printf("check output file contains string: '%s'\n", strings.Join(output_contains_strings, ","))
+	log.Printf("check output file: '%s'\n", outputFile)
+	log.Printf("check output file contains string: '%s'\n", strings.Join(outputContainsStrings, ","))
 
-	out, err := read_file(output_file)
+	out, err := readFile(outputFile)
 	if err != nil {
 		return false, err
 	}
@@ -425,10 +421,10 @@ func check_file_contains_strings() (bool, error) {
 	}
 
 	if strings.Contains(out, "Error") {
-		return false, errors.New("Output contains error!")
+		return false, errors.New("Output contains error")
 	}
 
-	for _, str := range output_contains_strings {
+	for _, str := range outputContainsStrings {
 		if !strings.Contains(out, str) {
 			return false, nil
 		}
@@ -437,7 +433,7 @@ func check_file_contains_strings() (bool, error) {
 	return true, nil
 }
 
-func get_table_value(table *gherkin.DataTable, column string) string {
+func getTableValue(table *gherkin.DataTable, column string) string {
 
 	names := table.Rows[0].Cells
 	for i, cell := range names {
@@ -450,7 +446,7 @@ func get_table_value(table *gherkin.DataTable, column string) string {
 	return ""
 }
 
-var test_image = "/9j/4AAQSkZJRgABAQAAAQABAAD/2wCEAAkGBxAPDw0PDQ0PDg0PDQ0PDQ0PDQ8ODQ0NFRIWFhUSExUYHyghGB4lJxMWITEhJSor" +
+var testImage = "/9j/4AAQSkZJRgABAQAAAQABAAD/2wCEAAkGBxAPDw0PDQ0PDg0PDQ0PDQ0PDQ8ODQ0NFRIWFhUSExUYHyghGB4lJxMWITEhJSor" +
 	"Li4uGB8zODMsNygtLisBCgoKDQ0NDxAPFSsdFRktLSs4LCsrKysrKysrKzcrLSsrKy0tKzcrKysrKysrKystNy0rKysrKysrKysr" +
 	"KysrK//AABEIAOEA4QMBIgACEQEDEQH/xAAcAAEAAQUBAQAAAAAAAAAAAAAAAQIDBAUGBwj/xABAEAEAAgECAgcEBAoLAQAAAAAA" +
 	"AQIDBBEFIQYHEhMxQWFRcZGxMkKBghQiI3KDkqGissEIF1NUYpOjwtHh8BX/xAAWAQEBAQAAAAAAAAAAAAAAAAAAAQL/xAAWEQEB" +
