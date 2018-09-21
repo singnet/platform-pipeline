@@ -46,19 +46,10 @@ func readFile(file string) (string, error) {
 	return string(buf), nil
 }
 
-func fileExists(fileName string) (bool, error) {
+func fileExists(fileName string) bool {
 
 	_, err := os.Stat(fileName)
-
-	if err == nil {
-		return true, nil
-	}
-
-	if os.IsNotExist(err) {
-		return false, nil
-	}
-
-	return true, err
+	return !os.IsNotExist(err)
 }
 
 func writeToFile(fileName string, content string) error {
@@ -87,28 +78,13 @@ func appendToFile(fileName string, content string) error {
 	return err
 }
 
-func linkFile(fileName string, fileTo string) error {
+func linkFile(fileFrom string, fileTo string) error {
 
-	exists, err := fileExists(fileTo)
-
-	if err != nil {
-		return err
-	}
-
-	if exists {
+	if fileExists(fileTo) {
 		return nil
 	}
 
-	command := ExecCommand{
-		Command: "ln",
-		Args: []string{
-			"-s",
-			fileName,
-			fileTo,
-		},
-	}
-
-	return runCommand(command)
+	return os.Link(fileFrom, fileTo)
 }
 
 func runCommand(execCommad ExecCommand) error {
