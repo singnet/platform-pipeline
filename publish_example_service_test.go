@@ -244,7 +244,7 @@ func exampleserviceIsRegistered(table *gherkin.DataTable) error {
 	command := ExecCommand{
 		Command:   "snet",
 		Directory: exampleServiceDir,
-		Input:     []string{"", "", name, "", price, endpoint, tags, description},
+		Input:     []string{"", ".", name, "", price, endpoint, tags, description},
 		Args:      []string{"service", "init"},
 	}
 
