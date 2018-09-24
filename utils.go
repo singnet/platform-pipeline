@@ -84,7 +84,7 @@ func linkFile(fileFrom string, fileTo string) error {
 		return nil
 	}
 
-	return os.Link(fileFrom, fileTo)
+	return os.Symlink(fileFrom, fileTo)
 }
 
 func runCommand(execCommad ExecCommand) error {
