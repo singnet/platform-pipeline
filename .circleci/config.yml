@@ -3,53 +3,77 @@ jobs:
   build:
     docker:
     - image: ubuntu:latest
-    working_directory: /root/go/src/github.com/singnet
+    working_directory: /root/singnet/src/github.com/singnet/platform-pipeline
     environment:
-      GOPATH: /root/go
-      SINGNET_REPOS: /root/go/src/github.com/singnet
+      GOPATH: /root/singnet
+      SINGNET_REPOS: /root/singnet/src/github.com/singnet
     steps:
     - run:
         name: Install tools
         command: |
           export PATH=$PATH:$GOPATH/bin
+          mkdir $GOPATH/download
+          cd $GOPATH/download
           apt-get update
           apt-get -y install sudo wget git
           # Install NodeJS toolset
           sudo apt-get -y install nodejs npm
-          # install protobuf
+          # install Go tools
           sudo apt-get -y install golang go-dep golang-goprotobuf-dev golint
           # install IPFS
           wget https://dist.ipfs.io/go-ipfs/v0.4.17/go-ipfs_v0.4.17_linux-amd64.tar.gz
           tar xvfz go-ipfs_*.tar.gz
-          cp ./go-ipfs/ipfs $GOPATH/bin
+          cp ./go-ipfs/ipfs /usr/local/bin
           # Installl Python
           sudo apt-get -y install python3 python3-pip
           # Install other
           sudo apt-get -y install libudev-dev libusb-1.0-0-dev
+    - run:
+        name: Build token-contracts
+        command: |
+          cd $SINGNET_REPOS
+          git clone https://github.com/singnet/token-contracts.git
+          cd token-contracts
+          npm install
+          npm run-script compile
+          npm run-script package-npm
     - run:
         name: Build platform-contracts
         command: |
           cd $SINGNET_REPOS
           git clone https://github.com/singnet/platform-contracts.git
           cd platform-contracts
-          npm install
           npm install ganache-cli
+          # install token-contracts from local dir
+          npm install $SINGNET_REPOS/token-contracts/build/npm-module
+          npm install
+          npm run-script compile
+          npm run-script package-npm
     - run:
         name: Build snet-cli
         command: |
           cd $SINGNET_REPOS
           git clone https://github.com/singnet/snet-cli.git
           cd snet-cli
+          # install token-contracts and platform-contracts from local dir
+          cd blockchain/
+          npm install $SINGNET_REPOS/token-contracts/build/npm-module
+          npm install $SINGNET_REPOS/platform-contracts/build/npm-module
+          cd ..
           ./scripts/blockchain install
           pip3 install -e .
     - run:
         name: Build snet-daemon
         command: |
           export PATH=$PATH:$GOPATH/bin
-          rm -rf $GOPATH/bin
           cd $SINGNET_REPOS
           git clone https://github.com/singnet/snet-daemon.git
           cd snet-daemon
+          # install token-contracts and platform-contracts from local dir
+          cd resources/blockchain
+          npm install $SINGNET_REPOS/token-contracts/build/npm-module
+          npm install $SINGNET_REPOS/platform-contracts/build/npm-module
+          cd ../..
           ./scripts/install
           ./scripts/build linux amd64
     - run:
@@ -60,3 +84,13 @@ jobs:
           git clone https://github.com/singnet/example-service.git
           cd example-service
           pip3 install -r requirements.txt
+    - checkout
+    - run:
+        name: Run integration tests
+        command: |
+          export PATH=$PATH:$GOPATH/bin
+          mkdir $GOPATH/log
+          go get github.com/DATA-DOG/godog/cmd/godog
+          # Disable TensorFlow warnings wich pollute example-service log file
+          export TF_CPP_MIN_LOG_LEVEL=2
+          godog
