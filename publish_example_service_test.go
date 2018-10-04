@@ -266,7 +266,7 @@ func exampleserviceIsPublishedToNetwork(table *gherkin.DataTable) error {
 	command := ExecCommand{
 		Command:   "snet",
 		Directory: exampleServiceDir,
-		Input:     []string{"y", "y"},
+		Input:     []string{"y", "y", "y"},
 		Args:      args,
 	}
 
