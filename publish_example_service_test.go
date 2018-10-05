@@ -222,11 +222,11 @@ func organizationIsAdded(table *gherkin.DataTable) error {
 		"createOrganization", organization,
 		"[\"" + member + "\"]",
 		"--transact",
+		"--yes",
 	}
 
 	command := ExecCommand{
 		Command: "snet",
-		Input:   []string{"y"},
 		Args:    args,
 	}
 
@@ -261,12 +261,12 @@ func exampleserviceIsPublishedToNetwork(table *gherkin.DataTable) error {
 		"--config", "./service.json",
 		"--agent-factory-at", agentFactoryAddress,
 		"--registry-at", registryAddress,
+		"--yes",
 	}
 
 	command := ExecCommand{
 		Command:   "snet",
 		Directory: exampleServiceDir,
-		Input:     []string{"y", "y", "y"},
 		Args:      args,
 	}
 
@@ -360,12 +360,12 @@ func singularityNETJobIsCreated(table *gherkin.DataTable) error {
 		"--funded",
 		"--signed",
 		"--max-price", maxPrice,
+		"--yes",
 	}
 
 	command := ExecCommand{
 		Command:   "snet",
 		Directory: exampleServiceDir,
-		Input:     []string{"y", "y", "y"},
 		Args:      args,
 	}
 
