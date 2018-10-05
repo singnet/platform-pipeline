@@ -36,16 +36,18 @@ For example, the *bash* command was inserted before running GoDog integration te
 ```
 
 * Run CircleCI in the platform-pipeline project
-  * cd platform-pipeline
-  * circleci build
+  * > cd platform-pipeline
+  * > circleci build
 * Wait until CircleCI build reaches the *bash* point
-* Connect to the CircleCI build by docker
+* Copy the docker image
   * List docker running containers
     * > docker ps
   * Select the container id for image "ubuntu:latest" from the output
-  * Connect to the docker image using the container-id
-    * > docker exec -it container-id bash
-    * > cd /root/singnet/src/github.com/singnet
-* Use instructions from the [Wiki page](https://github.com/singnet/wiki/wiki/Tutorial:-Build-and-deploy-SingularityNET-locally) to reproduce integration test
+  * Copy the docker image
+    * > docker commit container-id circleci-platform-pipeline
+* Run the copied CircleCI image by docker
+  * > docker run -it circleci-platform-pipeline bash
+  * > cd /root/singnet/src/github.com/singnet
+ * Use instructions from the [Wiki page](https://github.com/singnet/wiki/wiki/Tutorial:-Build-and-deploy-SingularityNET-locally) to reproduce integration test
 
 `Note`: necessary test environment variables are not set in this *bash* session and should be set manually.
