@@ -15,7 +15,7 @@ Feature: Publish example service
 			| ExampleOrganization | 1     | http://localhost:8080 | example service | Example service |
 		When  example-service is published to network
 			| agent factory address                      | registry address                           |
-			| 0x8d1c8634f032d1c65c540faca15f7df83fbb9f8c | 0x8d1c8634f032d1c65c540faca15f7df83fbb9f8c |
+			| 0x4e74fefa82e83e0964f0d9f53c68e03f7298a8b2 | 0x8d1c8634f032d1c65c540faca15f7df83fbb9f8c |
 		When example-service is run with snet-daemon
 			| daemon port | ethereum endpoint port | passthrough endpoint port | agent contract address                     | private key                                                      |
 			| 8080        | 8545                   | 5001                      | 0x3b07411493C72c5aEC01b6Cf3cd0981cF0586fA7 | ba398df3130586b0d5e6ef3f757bf7fe8a1299d4b7268fdaae415952ed30ba87 |
