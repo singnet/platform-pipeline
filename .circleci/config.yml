@@ -9,6 +9,12 @@ jobs:
       SINGNET_REPOS: /root/singnet/src/github.com/singnet
     steps:
     - run:
+        name: Show parent project info
+        command: |
+          echo PARENT_PROJECT_REPONAME=$PARENT_PROJECT_REPONAME
+          echo PARENT_BRANCH=$PARENT_BRANCH
+          echo PARENT_BUILD_URL=$PARENT_BUILD_URL
+    - run:
         name: Install tools
         command: |
           export PATH=$PATH:$GOPATH/bin
