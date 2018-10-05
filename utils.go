@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"errors"
 	"io/ioutil"
 	"log"
@@ -85,6 +86,49 @@ func linkFile(fileFrom string, fileTo string) error {
 	}
 
 	return os.Symlink(fileFrom, fileTo)
+}
+
+func getPropertyFromFile(path string, property string) (string, error) {
+	return getPropertyWithIndexFromFile(path, property, 0)
+}
+
+func getPropertyWithIndexFromFile(path string, property string, index int) (string, error) {
+
+	f, err := os.Open(path)
+	if err != nil {
+		return "", err
+	}
+
+	defer f.Close()
+
+	scanner := bufio.NewScanner(f)
+	scanner.Split(bufio.ScanWords)
+
+	found := false
+	for scanner.Scan() {
+
+		if found {
+			value := scanner.Text()
+			if err := scanner.Err(); err != nil {
+				return "", err
+			}
+			return value, nil
+		}
+
+		if strings.Contains(scanner.Text(), property) {
+			if index == 0 {
+				found = true
+			} else {
+				index--
+			}
+		}
+	}
+
+	if err := scanner.Err(); err != nil {
+		return "", err
+	}
+
+	return "", errors.New("Property: " + property + " not found in file: " + path)
 }
 
 func runCommand(execCommad ExecCommand) error {

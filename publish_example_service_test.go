@@ -18,6 +18,13 @@ var platformContractsDir string
 var exampleServiceDir string
 var snetConfigFile string
 
+var accountPrivateKey string
+var identiyPrivateKey string
+var agentFactoryAddress string
+var registryAddress string
+var organizationAddress string
+var agentAddress string
+
 func init() {
 	platformContractsDir = envSingnetRepos + "/platform-contracts"
 	exampleServiceDir = envSingnetRepos + "/example-service"
@@ -52,6 +59,27 @@ func ethereumNetworkIsRunningOnPort(port int) error {
 		return errors.New("Etherium networks is not started")
 	}
 
+	organizationAddress, err = getPropertyFromFile(outputFile, "(1)")
+	if err != nil {
+		return err
+	}
+
+	accountPrivateKey, err = getPropertyWithIndexFromFile(outputFile, "(2)", 1)
+	if err != nil {
+		return err
+	}
+
+	if len(accountPrivateKey) < 3 {
+		return errors.New("Len of account privite key is to small: " + accountPrivateKey)
+	}
+
+	accountPrivateKey = accountPrivateKey[2:len(accountPrivateKey)]
+
+	identiyPrivateKey, err = getPropertyWithIndexFromFile(outputFile, "(0)", 1)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -69,8 +97,20 @@ func contractsAreDeployedUsingTruffle() error {
 		return err
 	}
 
+	output := "migrate.out"
 	command.Args = []string{"migrate", "--network", "local"}
+	command.OutputFile = output
 	err = runCommand(command)
+
+	registryAddress, err = getPropertyFromFile(output, "Registry:")
+	if err != nil {
+		return err
+	}
+
+	agentFactoryAddress, err = getPropertyFromFile(output, "AgentFactory:")
+	if err != nil {
+		return err
+	}
 
 	return err
 }
@@ -145,7 +185,7 @@ func identityIsCreatedWithUserAndPrivateKey(user string, privateKey string) erro
 
 	command := ExecCommand{
 		Command: "snet",
-		Args:    []string{"identity", "create", user, "key", "--private-key", privateKey},
+		Args:    []string{"identity", "create", user, "key", "--private-key", identiyPrivateKey},
 	}
 	err := runCommand(command)
 
@@ -213,14 +253,12 @@ default_ipfs_endpoint = http://localhost:` + toString(endpointIPFS)
 func organizationIsAdded(table *gherkin.DataTable) error {
 
 	organization := getTableValue(table, "organization")
-	address := getTableValue(table, "address")
-	member := getTableValue(table, "member")
 
 	args := []string{
 		"contract", "Registry",
-		"--at", address,
+		"--at", registryAddress,
 		"createOrganization", organization,
-		"[\"" + member + "\"]",
+		"[\"" + organizationAddress + "\"]",
 		"--transact",
 		"--yes",
 	}
@@ -251,14 +289,12 @@ func exampleserviceIsRegistered(table *gherkin.DataTable) error {
 	return runCommand(command)
 }
 
-func exampleserviceIsPublishedToNetwork(table *gherkin.DataTable) error {
+func exampleserviceIsPublishedToNetwork() error {
 
-	agentFactoryAddress := getTableValue(table, "agent factory address")
-	registryAddress := getTableValue(table, "registry address")
-
+	serviceFile := "./service.json"
 	args := []string{
 		"service", "publish", "local",
-		"--config", "./service.json",
+		"--config", serviceFile,
 		"--agent-factory-at", agentFactoryAddress,
 		"--registry-at", registryAddress,
 		"--yes",
@@ -270,7 +306,27 @@ func exampleserviceIsPublishedToNetwork(table *gherkin.DataTable) error {
 		Args:      args,
 	}
 
-	return runCommand(command)
+	err := runCommand(command)
+	if err != nil {
+		return err
+	}
+
+	agentAddress, err = getPropertyFromFile(
+		exampleServiceDir+"/"+serviceFile,
+		"\"agentAddress\":",
+	)
+
+	if err != nil {
+		return err
+	}
+
+	if len(agentAddress) < 2 {
+		return errors.New("Len of accoagent address is to small: " + agentAddress)
+	}
+
+	agentAddress = agentAddress[1 : len(agentAddress)-1]
+
+	return nil
 }
 
 func exampleserviceIsRunWithSnetdaemon(table *gherkin.DataTable) error {
@@ -278,9 +334,6 @@ func exampleserviceIsRunWithSnetdaemon(table *gherkin.DataTable) error {
 	daemonPort := getTableValue(table, "daemon port")
 	ethereumEndpointPort := getTableValue(table, "ethereum endpoint port")
 	passthroughEndpointPort := getTableValue(table, "passthrough endpoint port")
-
-	agentContractAddress := getTableValue(table, "agent contract address")
-	privateKey := getTableValue(table, "private key")
 
 	snetdConfigTemplate := `
 	{
@@ -306,7 +359,7 @@ func exampleserviceIsRunWithSnetdaemon(table *gherkin.DataTable) error {
     }`
 
 	snetdConfig := fmt.Sprintf(snetdConfigTemplate,
-		agentContractAddress, daemonPort, ethereumEndpointPort, passthroughEndpointPort, privateKey)
+		agentAddress, daemonPort, ethereumEndpointPort, passthroughEndpointPort, accountPrivateKey)
 
 	file := exampleServiceDir + "/snetd.config.json"
 	err := writeToFile(file, snetdConfig)
@@ -350,12 +403,11 @@ func exampleserviceIsRunWithSnetdaemon(table *gherkin.DataTable) error {
 
 func singularityNETJobIsCreated(table *gherkin.DataTable) error {
 
-	agentContractAddress := getTableValue(table, "agent contract address")
 	maxPrice := getTableValue(table, "max price")
 
 	args := []string{
 		"agent",
-		"--at", agentContractAddress,
+		"--at", agentAddress,
 		"create-jobs",
 		"--funded",
 		"--signed",
@@ -378,7 +430,7 @@ func singularityNETJobIsCreated(table *gherkin.DataTable) error {
 	args = []string{
 		"client", "call", "classify",
 		fmt.Sprintf(`{"image_type": "jpg", "image": "%s"}`, testImage),
-		"--agent-at", agentContractAddress,
+		"--agent-at", agentAddress,
 	}
 
 	command = ExecCommand{
