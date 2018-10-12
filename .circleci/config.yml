@@ -60,8 +60,7 @@ jobs:
         command: |
           cd $SINGNET_REPOS
           git clone https://github.com/singnet/snet-cli.git
-          cd snet-cli
-          
+          cd snet-cli 
           # install token-contracts and platform-contracts from local dir
           ./scripts/install_dev.py $SINGNET_REPOS/platform-contracts
           sudo pip3 install -e .
