@@ -61,13 +61,10 @@ jobs:
           cd $SINGNET_REPOS
           git clone https://github.com/singnet/snet-cli.git
           cd snet-cli
+          
           # install token-contracts and platform-contracts from local dir
-          cd blockchain/
-          npm install $SINGNET_REPOS/token-contracts/build/npm-module
-          npm install $SINGNET_REPOS/platform-contracts/build/npm-module
-          cd ..
-          ./scripts/blockchain install
-          pip3 install -e .
+          ./scripts/install_dev.py $SINGNET_REPOS/platform-contracts
+          sudo pip3 install -e .
     - run:
         name: Build snet-daemon
         command: |
