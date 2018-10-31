@@ -217,3 +217,47 @@ func checkWithTimeout(timeout time.Duration,
 func toString(value int) string {
 	return strconv.Itoa(value)
 }
+
+var outputFile string
+var outputContainsStrings []string
+var outputSkipErrors []string
+
+func checkFileContainsStrings() (bool, error) {
+
+	if len(outputSkipErrors) > 0 {
+		log.Printf("check output with skipped errors: '%s'\n", strings.Join(outputSkipErrors, ","))
+	}
+
+	out, err := readFile(outputFile)
+	if err != nil {
+		return false, err
+	}
+
+	if out != "" {
+		log.Printf("Output: %s\n", out)
+	}
+
+	for _, line := range strings.Split(out, "\n") {
+		if strings.Contains(strings.ToLower(line), "error") {
+			skip := false
+			for _, skipErr := range outputSkipErrors {
+				if strings.Contains(out, skipErr) {
+					log.Printf("skipp error: '%s'\n", skipErr)
+					skip = true
+					break
+				}
+			}
+			if !skip {
+				return false, errors.New("Output contains error: '" + line + "'")
+			}
+		}
+	}
+
+	for _, str := range outputContainsStrings {
+		if !strings.Contains(out, str) {
+			return false, nil
+		}
+	}
+
+	return true, nil
+}
