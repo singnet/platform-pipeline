@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
@@ -218,17 +219,27 @@ func toString(value int) string {
 	return strconv.Itoa(value)
 }
 
-var outputFile string
-var outputContainsStrings []string
-var outputSkipErrors []string
+type checkFileContains struct {
+	strings    []string
+	skipErrors []string
+	ignoreCase bool
+	output     string
+}
 
-func checkFileContainsStrings() (bool, error) {
+func checkFileContainsStringsFunc(fileContains checkFileContains) checkWithTimeoutType {
+	return func() (bool, error) {
+		return checkFileContainsStrings(fileContains)
+	}
+}
 
-	if len(outputSkipErrors) > 0 {
-		log.Printf("check output with skipped errors: '%s'\n", strings.Join(outputSkipErrors, ","))
+func checkFileContainsStrings(fileContains checkFileContains) (bool, error) {
+
+	if len(fileContains.skipErrors) > 0 {
+		skipErrors := strings.Join(fileContains.skipErrors, ",")
+		log.Printf("check output with skipped errors: '%s'\n", skipErrors)
 	}
 
-	out, err := readFile(outputFile)
+	out, err := readFile(fileContains.output)
 	if err != nil {
 		return false, err
 	}
@@ -240,7 +251,7 @@ func checkFileContainsStrings() (bool, error) {
 	for _, line := range strings.Split(out, "\n") {
 		if strings.Contains(strings.ToLower(line), "error") {
 			skip := false
-			for _, skipErr := range outputSkipErrors {
+			for _, skipErr := range fileContains.skipErrors {
 				if strings.Contains(out, skipErr) {
 					log.Printf("skipp error: '%s'\n", skipErr)
 					skip = true
@@ -253,11 +264,36 @@ func checkFileContainsStrings() (bool, error) {
 		}
 	}
 
-	for _, str := range outputContainsStrings {
-		if !strings.Contains(out, str) {
+	for _, str := range fileContains.strings {
+		if !contains(out, str, fileContains.ignoreCase) {
 			return false, nil
 		}
 	}
 
 	return true, nil
+}
+
+func contains(str string, substr string, ignoreCase bool) bool {
+
+	if ignoreCase {
+		return strings.Contains(strings.ToLower(str), strings.ToLower(substr))
+	}
+
+	return strings.Contains(str, substr)
+}
+
+func fileContainsError(fileContains checkFileContains, ok bool, e error) (err error) {
+
+	if e != nil {
+		err = e
+		return
+	}
+
+	if !ok {
+		msg := fmt.Sprintf("File contains error: %+v", fileContains)
+		err = errors.New(msg)
+		return
+	}
+
+	return
 }

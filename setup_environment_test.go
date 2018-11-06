@@ -10,11 +10,14 @@ import (
 var platformContractsDir string
 var exampleServiceDir string
 var dnnModelServicesDir string
+var treasurerServerDir string
 var snetConfigFile string
 
+var treasurerPrivateKey string
 var accountPrivateKey string
 var identiyPrivateKey string
 
+var snetIdentityAddress string
 var agentFactoryAddress string
 var singnetTokenAddress string
 var registryAddress string
@@ -29,6 +32,7 @@ func init() {
 	platformContractsDir = envSingnetRepos + "/platform-contracts"
 	exampleServiceDir = envSingnetRepos + "/example-service"
 	dnnModelServicesDir = envSingnetRepos + "/dnn-model-services/Services/gRPC/Basic_Template"
+	treasurerServerDir = envSingnetRepos + "/treasurer"
 	snetConfigFile = envHome + "/.snet/config"
 }
 
@@ -38,8 +42,12 @@ func ethereumNetworkIsRunningOnPort(port int) (err error) {
 		return
 	}
 
-	outputFile = logPath + "/ganache.log"
-	outputContainsStrings = []string{"Listening on 127.0.0.1:" + toString(port)}
+	outputFile := logPath + "/ganache.log"
+
+	fileContains := checkFileContains{
+		output:  outputFile,
+		strings: []string{"Listening on 127.0.0.1:" + toString(port)},
+	}
 
 	args := []string{"--mnemonic", "gauge enact biology destroy normal tunnel slight slide wide sauce ladder produce"}
 	command := ExecCommand{
@@ -55,7 +63,7 @@ func ethereumNetworkIsRunningOnPort(port int) (err error) {
 		return
 	}
 
-	exists, err := checkWithTimeout(5000, 500, checkFileContainsStrings)
+	exists, err := checkWithTimeout(5000, 500, checkFileContainsStringsFunc(fileContains))
 	if err != nil {
 		return
 	}
@@ -64,26 +72,47 @@ func ethereumNetworkIsRunningOnPort(port int) (err error) {
 		return errors.New("Etherium networks is not started")
 	}
 
+	snetIdentityAddress, err = getPropertyFromFile(outputFile, "(0)")
+	if err != nil {
+		return
+	}
+
 	organizationAddress, err = getPropertyFromFile(outputFile, "(1)")
 	if err != nil {
 		return
 	}
 
-	accountPrivateKey, err = getPropertyWithIndexFromFile(outputFile, "(2)", 1)
+	treasurerPrivateKey, err = getPrivateKey("1", outputFile)
 	if err != nil {
 		return
 	}
 
-	if len(accountPrivateKey) < 3 {
-		return errors.New("Len of account privite key is to small: " + accountPrivateKey)
+	accountPrivateKey, err = getPrivateKey("2", outputFile)
+	if err != nil {
+		return
 	}
-
-	accountPrivateKey = accountPrivateKey[2:len(accountPrivateKey)]
 
 	identiyPrivateKey, err = getPropertyWithIndexFromFile(outputFile, "(0)", 1)
 	if err != nil {
 		return
 	}
+
+	return
+}
+
+func getPrivateKey(index string, file string) (key string, err error) {
+
+	key, err = getPropertyWithIndexFromFile(file, "("+index+")", 1)
+	if err != nil {
+		return
+	}
+
+	if len(key) < 3 {
+		err = errors.New("Len of account privite key is to small: " + key)
+		return
+	}
+
+	key = key[2:len(key)]
 
 	return
 }
@@ -106,7 +135,7 @@ func contractsAreDeployedUsingTruffle() (err error) {
 		return
 	}
 
-	output := "migrate.out"
+	output := logPath + "/migrate.out"
 	command.Args = []string{"migrate", "--network", "local"}
 	command.OutputFile = output
 	err = runCommand(command)
@@ -177,7 +206,7 @@ func ipfsIsRunning(portAPI int, portGateway int) (err error) {
 		return
 	}
 
-	outputFile = logPath + "/ipfs.log"
+	outputFile := logPath + "/ipfs.log"
 	command.OutputFile = outputFile
 	command.Args = []string{"daemon"}
 	err = runCommandAsync(command)
@@ -186,12 +215,16 @@ func ipfsIsRunning(portAPI int, portGateway int) (err error) {
 		return
 	}
 
-	outputContainsStrings = []string{
-		"Daemon is ready",
-		"server listening on " + addressAPI,
-		"server listening on " + addressGateway,
+	fileContains := checkFileContains{
+		output: outputFile,
+		strings: []string{
+			"Daemon is ready",
+			"server listening on " + addressAPI,
+			"server listening on " + addressGateway,
+		},
 	}
-	exists, err := checkWithTimeout(5000, 500, checkFileContainsStrings)
+
+	exists, err := checkWithTimeout(5000, 500, checkFileContainsStringsFunc(fileContains))
 
 	if err != nil {
 		return
@@ -204,7 +237,7 @@ func ipfsIsRunning(portAPI int, portGateway int) (err error) {
 	return nil
 }
 
-func identityIsCreatedWithUserAndPrivateKey(user string, privateKey string) (err error) {
+func identityIsCreatedWithUser(user string) (err error) {
 
 	if environmentIsSet {
 		return
@@ -250,9 +283,12 @@ default_eth_rpc_endpoint = http://localhost:` + toString(endpointEthereumRPC)
 		return
 	}
 
-	outputFile = snetConfigFile
-	outputContainsStrings = []string{"session"}
-	exists, e := checkWithTimeout(5000, 500, checkFileContainsStrings)
+	fileContains := checkFileContains{
+		output:  snetConfigFile,
+		strings: []string{"session"},
+	}
+
+	exists, e := checkWithTimeout(5000, 500, checkFileContainsStringsFunc(fileContains))
 
 	if !exists {
 		return errors.New("snet config file is not created: " + snetConfigFile)

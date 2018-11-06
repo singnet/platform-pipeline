@@ -4,7 +4,7 @@ Feature: Publish example service
 		Given Ethereum network is running on port 8545
 		Given Contracts are deployed using Truffle
 		Given IPFS is running with API port 5002 and Gateway port 8081
-		Given Identity is created with user "snet-user" and private key "0xc71478a6d0fe44e763649de0a0deb5a080b788eefbbcf9c6f7aef0dd5dbd67e0"
+		Given Identity is created with user "snet-user"
 		Given snet is configured with Ethereum RPC endpoint 8545
 		Given snet is configured with IPFS endpoint 5002
 		Given Organization is added:
@@ -15,7 +15,7 @@ Feature: Publish example service
 		When  example-service is registered
 			| name                | service_spec | price | endpoint              | tags            | description     |
 			| ExampleOrganization | service_spec | 1     | http://localhost:8080 | example service | Example service |
-		When  example-service is published to network
+		When example-service is published to network
 		When example-service is run with snet-daemon
 			| daemon port | ethereum endpoint port | passthrough endpoint port |
 			| 8080        | 8545                   | 5001                      |
@@ -29,7 +29,7 @@ Feature: Publish example service
 			| ExampleOrganization | service/service_spec | 1     | http://localhost:8090 | dnn service | DNN Example service |
 		When  dnn-model service is published to network
 		When  dnn-model mpe service is registered
-			| name                | endpoint       | group  |
+			| name                | endpoint              | group  |
 			| ExampleOrganization | http://localhost:8090 | group1 |
 		When  dnn-model service snet-daemon config file is created
             | daemon port | ethereum endpoint port | passthrough endpoint port | price |
@@ -37,4 +37,7 @@ Feature: Publish example service
 		When dnn-model service is running
 		When dnn-model open the payment channel
 		When dnn-model compile protobuf
-		Then dnn-model make a call using stateless logic
+		Then dnn-model make a call using payment channel
+		Then dnn-model claim channel by treasurer server
+			| daemon port | ethereum endpoint port | passthrough endpoint port |
+			| 8090        | 8545                   | 7003                      |
