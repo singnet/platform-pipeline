@@ -1,332 +1,18 @@
 package main
 
 import (
-	"errors"
 	"fmt"
-	"log"
-	"strings"
 	"time"
 
-	"github.com/DATA-DOG/godog"
 	"github.com/DATA-DOG/godog/gherkin"
 )
 
-var outputFile string
-var outputContainsStrings []string
-
-var platformContractsDir string
-var exampleServiceDir string
-var snetConfigFile string
-
-var accountPrivateKey string
-var identiyPrivateKey string
-var agentFactoryAddress string
-var registryAddress string
-var organizationAddress string
-var agentAddress string
-
-func init() {
-	platformContractsDir = envSingnetRepos + "/platform-contracts"
-	exampleServiceDir = envSingnetRepos + "/example-service"
-	snetConfigFile = envHome + "/.snet/config"
-}
-
-func ethereumNetworkIsRunningOnPort(port int) error {
-
-	outputFile = logPath + "/ganache.log"
-	outputContainsStrings = []string{"Listening on 127.0.0.1:" + toString(port)}
-
-	args := []string{"--mnemonic", "gauge enact biology destroy normal tunnel slight slide wide sauce ladder produce"}
-	command := ExecCommand{
-		Command:    "./node_modules/.bin/ganache-cli",
-		Directory:  platformContractsDir,
-		OutputFile: outputFile,
-		Args:       args,
-	}
-
-	err := runCommandAsync(command)
-
-	if err != nil {
-		return err
-	}
-
-	exists, err := checkWithTimeout(5000, 500, checkFileContainsStrings)
-	if err != nil {
-		return err
-	}
-
-	if !exists {
-		return errors.New("Etherium networks is not started")
-	}
-
-	organizationAddress, err = getPropertyFromFile(outputFile, "(1)")
-	if err != nil {
-		return err
-	}
-
-	accountPrivateKey, err = getPropertyWithIndexFromFile(outputFile, "(2)", 1)
-	if err != nil {
-		return err
-	}
-
-	if len(accountPrivateKey) < 3 {
-		return errors.New("Len of account privite key is to small: " + accountPrivateKey)
-	}
-
-	accountPrivateKey = accountPrivateKey[2:len(accountPrivateKey)]
-
-	identiyPrivateKey, err = getPropertyWithIndexFromFile(outputFile, "(0)", 1)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func contractsAreDeployedUsingTruffle() error {
-
-	command := ExecCommand{
-		Command:   "./node_modules/.bin/truffle",
-		Directory: platformContractsDir,
-		Args:      []string{"compile"},
-	}
-
-	err := runCommand(command)
-
-	if err != nil {
-		return err
-	}
-
-	output := "migrate.out"
-	command.Args = []string{"migrate", "--network", "local"}
-	command.OutputFile = output
-	err = runCommand(command)
-
-	registryAddress, err = getPropertyFromFile(output, "Registry:")
-	if err != nil {
-		return err
-	}
-
-	agentFactoryAddress, err = getPropertyFromFile(output, "AgentFactory:")
-	if err != nil {
-		return err
-	}
-
-	return err
-}
-
-func ipfsIsRunning(portAPI int, portGateway int) error {
-
-	env := []string{"IPFS_PATH=" + envGoPath + "/ipfs"}
-
-	command := ExecCommand{
-		Command: "ipfs",
-		Env:     env,
-		Args:    []string{"init"},
-	}
-
-	err := runCommand(command)
-
-	if err != nil {
-		return err
-	}
-
-	command.Args = []string{"bootstrap", "rm", "--all"}
-	err = runCommand(command)
-
-	if err != nil {
-		return err
-	}
-
-	addressAPI := "/ip4/127.0.0.1/tcp/" + toString(portAPI)
-	command.Args = []string{"config", "Addresses.API", addressAPI}
-	err = runCommand(command)
-
-	if err != nil {
-		return err
-	}
-
-	addressGateway := "/ip4/0.0.0.0/tcp/" + toString(portGateway)
-	command.Args = []string{"config", "Addresses.Gateway", addressGateway}
-	err = runCommand(command)
-
-	if err != nil {
-		return err
-	}
-
-	outputFile = logPath + "/ipfs.log"
-	command.OutputFile = outputFile
-	command.Args = []string{"daemon"}
-	err = runCommandAsync(command)
-
-	if err != nil {
-		return err
-	}
-
-	outputContainsStrings = []string{
-		"Daemon is ready",
-		"server listening on " + addressAPI,
-		"server listening on " + addressGateway,
-	}
-	exists, err := checkWithTimeout(5000, 500, checkFileContainsStrings)
-
-	if err != nil {
-		return err
-	}
-
-	if !exists {
-		return errors.New("Etherium networks is not started")
-	}
-
-	return nil
-}
-
-func identityIsCreatedWithUserAndPrivateKey(user string, privateKey string) error {
-
-	command := ExecCommand{
-		Command: "snet",
-		Args:    []string{"identity", "create", user, "key", "--private-key", identiyPrivateKey},
-	}
-	err := runCommand(command)
-
-	if err != nil {
-		return err
-	}
-
-	command.Args = []string{"identity", "snet-user"}
-	return runCommand(command)
-}
-
-func snetIsConfiguredWithEthereumRPCEndpoint(endpointEthereumRPC int) error {
-
-	config := `
-[network.local]
-default_eth_rpc_endpoint = http://localhost:` + toString(endpointEthereumRPC)
-
-	err := appendToFile(snetConfigFile, config)
-
-	if err != nil {
-		return err
-	}
-
-	command := ExecCommand{
-		Command: "snet",
-		Args:    []string{"network", "local"},
-	}
-	err = runCommand(command)
-
-	if err != nil {
-		return err
-	}
-
-	outputFile = snetConfigFile
-	outputContainsStrings = []string{"session"}
-	exists, e := checkWithTimeout(5000, 500, checkFileContainsStrings)
-
-	if !exists {
-		return errors.New("snet config file is not created: " + snetConfigFile)
-	}
-
-	return e
-}
-
-func snetIsConfiguredWithIPFSEndpoint(endpointIPFS int) error {
-
-	command := ExecCommand{
-		Command: "sed",
-		Args:    []string{"-ie", "/ipfs/,+2d", snetConfigFile},
-	}
-
-	err := runCommand(command)
-
-	if err != nil {
-		return err
-	}
-
-	config := `
-[ipfs]
-default_ipfs_endpoint = http://localhost:` + toString(endpointIPFS)
-
-	return appendToFile(snetConfigFile, config)
-}
-
-func organizationIsAdded(table *gherkin.DataTable) error {
-
-	organization := getTableValue(table, "organization")
-
-	args := []string{
-		"contract", "Registry",
-		"--at", registryAddress,
-		"createOrganization", organization,
-		"[\"" + organizationAddress + "\"]",
-		"--transact",
-		"--yes",
-	}
-
-	command := ExecCommand{
-		Command: "snet",
-		Args:    args,
-	}
-
-	return runCommand(command)
-}
-
 func exampleserviceIsRegistered(table *gherkin.DataTable) error {
-
-	name := getTableValue(table, "name")
-	price := getTableValue(table, "price")
-	endpoint := getTableValue(table, "endpoint")
-	tags := getTableValue(table, "tags")
-	description := getTableValue(table, "description")
-
-	command := ExecCommand{
-		Command:   "snet",
-		Directory: exampleServiceDir,
-		Input:     []string{"", "", name, "", price, endpoint, tags, description},
-		Args:      []string{"service", "init"},
-	}
-
-	return runCommand(command)
+	return serviceIsRegistered(table, exampleServiceDir)
 }
 
 func exampleserviceIsPublishedToNetwork() error {
-
-	serviceFile := "./service.json"
-	args := []string{
-		"service", "publish", "local",
-		"--config", serviceFile,
-		"--agent-factory-at", agentFactoryAddress,
-		"--registry-at", registryAddress,
-		"--yes",
-	}
-
-	command := ExecCommand{
-		Command:   "snet",
-		Directory: exampleServiceDir,
-		Args:      args,
-	}
-
-	err := runCommand(command)
-	if err != nil {
-		return err
-	}
-
-	agentAddress, err = getPropertyFromFile(
-		exampleServiceDir+"/"+serviceFile,
-		"\"agentAddress\":",
-	)
-
-	if err != nil {
-		return err
-	}
-
-	if len(agentAddress) < 2 {
-		return errors.New("Len of accoagent address is to small: " + agentAddress)
-	}
-
-	agentAddress = agentAddress[1 : len(agentAddress)-1]
-
-	return nil
+	return serviceIsPublishedToNetwork(exampleServiceDir, "./service.json")
 }
 
 func exampleserviceIsRunWithSnetdaemon(table *gherkin.DataTable) error {
@@ -370,8 +56,12 @@ func exampleserviceIsRunWithSnetdaemon(table *gherkin.DataTable) error {
 
 	linkFile(envSingnetRepos+"/snet-daemon/build/snetd-linux-amd64", exampleServiceDir+"/snetd-linux-amd64")
 
-	outputFile = logPath + "/example-service.log"
-	outputContainsStrings = []string{}
+	outputFile := logPath + "/example-service.log"
+
+	fileContains := checkFileContains{
+		output:  outputFile,
+		strings: []string{},
+	}
 
 	command := ExecCommand{
 		Command:    exampleServiceDir + "/scripts/run-snet-service",
@@ -385,7 +75,7 @@ func exampleserviceIsRunWithSnetdaemon(table *gherkin.DataTable) error {
 		return err
 	}
 
-	_, err = checkWithTimeout(5000, 500, checkFileContainsStrings)
+	_, err = checkWithTimeout(5000, 500, checkFileContainsStringsFunc(fileContains))
 
 	if err != nil {
 		return err
@@ -440,62 +130,6 @@ func singularityNETJobIsCreated(table *gherkin.DataTable) error {
 	}
 
 	return runCommand(command)
-}
-
-func FeatureContext(s *godog.Suite) {
-	s.Step(`^Ethereum network is running on port (\d+)$`, ethereumNetworkIsRunningOnPort)
-	s.Step(`^Contracts are deployed using Truffle$`, contractsAreDeployedUsingTruffle)
-	s.Step(`^IPFS is running with API port (\d+) and Gateway port (\d+)$`, ipfsIsRunning)
-	s.Step(`^Identity is created with user "([^"]*)" and private key "([^"]*)"$`,
-		identityIsCreatedWithUserAndPrivateKey)
-	s.Step(`^snet is configured with Ethereum RPC endpoint (\d+)$`, snetIsConfiguredWithEthereumRPCEndpoint)
-	s.Step(`^snet is configured with IPFS endpoint (\d+)$`, snetIsConfiguredWithIPFSEndpoint)
-	s.Step(`^Organization is added:$`, organizationIsAdded)
-	s.Step(`^example-service is registered$`, exampleserviceIsRegistered)
-	s.Step(`^example-service is published to network$`, exampleserviceIsPublishedToNetwork)
-	s.Step(`^example-service is run with snet-daemon$`, exampleserviceIsRunWithSnetdaemon)
-	s.Step(`^SingularityNET job is created$`, singularityNETJobIsCreated)
-
-}
-
-func checkFileContainsStrings() (bool, error) {
-
-	log.Printf("check output file: '%s'\n", outputFile)
-	log.Printf("check output file contains string: '%s'\n", strings.Join(outputContainsStrings, ","))
-
-	out, err := readFile(outputFile)
-	if err != nil {
-		return false, err
-	}
-
-	if out != "" {
-		log.Printf("Output: %s\n", out)
-	}
-
-	if strings.Contains(out, "Error") {
-		return false, errors.New("Output contains error")
-	}
-
-	for _, str := range outputContainsStrings {
-		if !strings.Contains(out, str) {
-			return false, nil
-		}
-	}
-
-	return true, nil
-}
-
-func getTableValue(table *gherkin.DataTable, column string) string {
-
-	names := table.Rows[0].Cells
-	for i, cell := range names {
-		if cell.Value == column {
-			return table.Rows[1].Cells[i].Value
-		}
-	}
-
-	log.Printf("column: %s has not been found in table", column)
-	return ""
 }
 
 var testImage = "/9j/4AAQSkZJRgABAQAAAQABAAD/2wCEAAkGBxAPDw0PDQ0PDg0PDQ0PDQ0PDQ8ODQ0NFRIWFhUSExUYHyghGB4lJxMWITEhJSor" +

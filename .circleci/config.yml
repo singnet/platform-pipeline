@@ -62,10 +62,10 @@ jobs:
           git clone https://github.com/singnet/snet-cli.git
           cd snet-cli
           # install token-contracts and platform-contracts from local dir
-          cd blockchain/
+          pushd blockchain/
           npm install $SINGNET_REPOS/token-contracts/build/npm-module
           npm install $SINGNET_REPOS/platform-contracts/build/npm-module
-          cd ..
+          popd
           ./scripts/blockchain install
           pip3 install -e .
     - run:
@@ -76,12 +76,13 @@ jobs:
           git clone https://github.com/singnet/snet-daemon.git
           cd snet-daemon
           # install token-contracts and platform-contracts from local dir
-          cd resources/blockchain
+          pushd resources/blockchain
           npm install $SINGNET_REPOS/token-contracts/build/npm-module
           npm install $SINGNET_REPOS/platform-contracts/build/npm-module
-          cd ../..
+          popd
           ./scripts/install
           ./scripts/build linux amd64
+          ln -s $SINGNET_REPOS/snet-daemon/build/snetd-linux-amd64 /usr/local/bin/snetd
     - run:
         name: Build example-service
         command: |
@@ -90,6 +91,12 @@ jobs:
           git clone https://github.com/singnet/example-service.git
           cd example-service
           pip3 install -r requirements.txt
+    - run:
+        name: Build dnn-model-services
+        command: |
+          export PATH=$PATH:$GOPATH/bin
+          cd $SINGNET_REPOS
+          git clone https://github.com/singnet/dnn-model-services.git
     - checkout
     - run:
         name: Run integration tests

@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
@@ -216,4 +217,83 @@ func checkWithTimeout(timeout time.Duration,
 
 func toString(value int) string {
 	return strconv.Itoa(value)
+}
+
+type checkFileContains struct {
+	strings    []string
+	skipErrors []string
+	ignoreCase bool
+	output     string
+}
+
+func checkFileContainsStringsFunc(fileContains checkFileContains) checkWithTimeoutType {
+	return func() (bool, error) {
+		return checkFileContainsStrings(fileContains)
+	}
+}
+
+func checkFileContainsStrings(fileContains checkFileContains) (bool, error) {
+
+	if len(fileContains.skipErrors) > 0 {
+		skipErrors := strings.Join(fileContains.skipErrors, ",")
+		log.Printf("check output with skipped errors: '%s'\n", skipErrors)
+	}
+
+	out, err := readFile(fileContains.output)
+	if err != nil {
+		return false, err
+	}
+
+	if out != "" {
+		log.Printf("Output: %s\n", out)
+	}
+
+	for _, line := range strings.Split(out, "\n") {
+		if strings.Contains(strings.ToLower(line), "error") {
+			skip := false
+			for _, skipErr := range fileContains.skipErrors {
+				if strings.Contains(out, skipErr) {
+					log.Printf("skipp error: '%s'\n", skipErr)
+					skip = true
+					break
+				}
+			}
+			if !skip {
+				return false, errors.New("Output contains error: '" + line + "'")
+			}
+		}
+	}
+
+	for _, str := range fileContains.strings {
+		if !contains(out, str, fileContains.ignoreCase) {
+			return false, nil
+		}
+	}
+
+	return true, nil
+}
+
+func contains(str string, substr string, ignoreCase bool) bool {
+
+	if ignoreCase {
+		return strings.Contains(strings.ToLower(str), strings.ToLower(substr))
+	}
+
+	return strings.Contains(str, substr)
+}
+
+func fileContainsError(fileContains checkFileContains, ok bool, e error) (err error) {
+
+	if e != nil {
+		err = e
+		return
+	}
+
+	if !ok {
+		msg := fmt.Sprintf("File contains error: %+v", fileContains)
+		err = errors.New(msg)
+		return
+	}
+
+	return
 }
