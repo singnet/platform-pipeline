@@ -39,5 +39,5 @@ Feature: Publish example service
 		When dnn-model compile protobuf
 		Then dnn-model make a call using payment channel
 		Then dnn-model claim channel by treasurer server
-			| daemon port | ethereum endpoint port | passthrough endpoint port |
-			| 8090        | 8545                   | 7003                      |
+			| ethereum endpoint port |
+			| 8545                   |

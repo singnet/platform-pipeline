@@ -370,19 +370,14 @@ func dnnmodelClaimChannelByTreasurerServer(table *gherkin.DataTable) (err error)
 		return
 	}
 
-	daemonPort := getTableValue(table, "daemon port")
 	ethereumEndpointPort := getTableValue(table, "ethereum endpoint port")
-	passthroughEndpointPort := getTableValue(table, "passthrough endpoint port")
 
 	snetdConfigTemplate := `
 	{
 		"AGENT_CONTRACT_ADDRESS": "%s",
 		"MULTI_PARTY_ESCROW_CONTRACT_ADDRESS": "%s",
 		"PRIVATE_KEY": "%s",
-		"DAEMON_LISTENING_PORT": %s,
 		"ETHEREUM_JSON_RPC_ENDPOINT": "http://localhost:%s",
-		"PASSTHROUGH_ENABLED": true,
-		"PASSTHROUGH_ENDPOINT": "http://localhost:%s",
 		"log": {
 			"level": "debug",
 			"output": {
@@ -394,9 +389,6 @@ func dnnmodelClaimChannelByTreasurerServer(table *gherkin.DataTable) (err error)
 			"connection_timeout": "5s",
 			"request_timeout": "3s",
 			"endpoints": ["http://127.0.0.1:2479"]
-		},
-		"payment_channel_storage_server": {
-			"enabled": false
 		}
 	}`
 
@@ -405,9 +397,7 @@ func dnnmodelClaimChannelByTreasurerServer(table *gherkin.DataTable) (err error)
 		agentAddress,
 		multiPartyEscrow,
 		treasurerPrivateKey,
-		daemonPort,
 		ethereumEndpointPort,
-		passthroughEndpointPort,
 	)
 
 	log.Println("conf file:\n", snetdConfig)
