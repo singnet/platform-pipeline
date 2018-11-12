@@ -29,8 +29,8 @@ Feature: Publish example service
 			| ExampleOrganization | service/service_spec | 1     | http://localhost:8090 | dnn service | DNN Example service |
 		When  dnn-model service is published to network
 		When  dnn-model mpe service is registered
-			| name                | endpoint              | group  |
-			| ExampleOrganization | http://localhost:8090 | group1 |
+			| name                | display name      | endpoint              | group  |
+			| DNNModelService     | DNN Model Service | http://localhost:8090 | group1 |
 		When  dnn-model service snet-daemon config file is created
             | daemon port | ethereum endpoint port | passthrough endpoint port | price |
             | 8090        | 8545                   | 7003                      | 10    |
