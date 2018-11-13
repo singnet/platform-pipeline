@@ -27,6 +27,7 @@ func dnnmodelServiceIsPublishedToNetwork() (err error) {
 func dnnmodelMpeServiceIsRegistered(table *gherkin.DataTable) (err error) {
 
 	name := getTableValue(table, "name")
+	displayName := getTableValue(table, "display name")
 	group := getTableValue(table, "group")
 	endpoint := getTableValue(table, "endpoint")
 
@@ -59,7 +60,10 @@ func dnnmodelMpeServiceIsRegistered(table *gherkin.DataTable) (err error) {
 	command = ExecCommand{
 		Command:   "snet",
 		Directory: dnnModelServicesDir,
-		Args:      []string{"mpe-service", "metadata_init", modelIpfsHash, multiPartyEscrow},
+		Args: []string{
+			"mpe-service", "metadata_init",
+			modelIpfsHash, multiPartyEscrow, displayName,
+		},
 	}
 
 	err = runCommand(command)
@@ -431,7 +435,7 @@ func dnnmodelClaimChannelByTreasurerServer(table *gherkin.DataTable) (err error)
 
 	fileContains := checkFileContains{
 		output:     output,
-		strings:    []string{snetIdentityAddress, organizationAddress, "420000", "12020"},
+		strings:    []string{snetIdentityAddress, organizationAddress, "420000"},
 		ignoreCase: true,
 	}
 
@@ -475,7 +479,7 @@ func dnnmodelClaimChannelByTreasurerServer(table *gherkin.DataTable) (err error)
 
 	fileContains = checkFileContains{
 		output:     output,
-		strings:    []string{snetIdentityAddress, organizationAddress, "419970", "12020"},
+		strings:    []string{snetIdentityAddress, organizationAddress, "419970"},
 		ignoreCase: true,
 	}
 
