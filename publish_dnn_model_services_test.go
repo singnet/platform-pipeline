@@ -304,9 +304,8 @@ func dnnmodelCompileProtobuf() (err error) {
 		Directory: dnnModelServicesDir,
 		Args: []string{
 			"mpe-client",
-			"compile_from_file",
+			"compile_from_dir",
 			envSingnetRepos + "/dnn-model-services/Services/gRPC/Basic_Template/service/service_spec",
-			"basic_tamplate_rpc.proto",
 			"0",
 		},
 	}
@@ -352,7 +351,8 @@ func dnnmodelMakeACallUsingPaymentChannel() (err error) {
 			Args: []string{
 				"mpe-client",
 				"call_server", multiPartyEscrow,
-				"0", "10", "localhost:8090", "Addition", "add", `{"a":10,"b":32}`,
+				"0", "10", "localhost:8090",
+				"--service", "Addition", "add", `{"a":10,"b":32}`,
 			},
 		}
 
