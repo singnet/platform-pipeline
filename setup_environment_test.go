@@ -18,12 +18,14 @@ var accountPrivateKey string
 var identiyPrivateKey string
 
 var snetIdentityAddress string
-var agentFactoryAddress string
+
+// var agentFactoryAddress string
 var singnetTokenAddress string
 var registryAddress string
 var multiPartyEscrow string
 var organizationAddress string
-var agentAddress string
+
+// var agentAddress string
 
 var environmentIsSet = false
 var serviceIsPublished = false
@@ -150,10 +152,10 @@ func contractsAreDeployedUsingTruffle() (err error) {
 		return
 	}
 
-	agentFactoryAddress, err = getPropertyFromFile(output, "AgentFactory:")
-	if err != nil {
-		return
-	}
+	// agentFactoryAddress, err = getPropertyFromFile(output, "AgentFactory:")
+	// if err != nil {
+	// 	return
+	// }
 
 	multiPartyEscrow, err = getPropertyFromFile(output, "MultiPartyEscrow:")
 	if err != nil {
@@ -329,6 +331,19 @@ func organizationIsAdded(table *gherkin.DataTable) (err error) {
 
 	organization := getTableValue(table, "organization")
 
+	return NewCommand().
+		Run("snet organization create %s --registry-at %s -y", organization, registryAddress).
+		Err()
+}
+
+func organizationIsAdded2(table *gherkin.DataTable) (err error) {
+
+	if environmentIsSet {
+		return
+	}
+
+	organization := getTableValue(table, "organization")
+
 	args := []string{
 		"contract", "Registry",
 		"--at", registryAddress,
@@ -382,7 +397,7 @@ func serviceIsPublishedToNetwork(dir string, serviceFile string) (err error) {
 	args := []string{
 		"service", "publish", "local",
 		"--config", serviceFile,
-		"--agent-factory-at", agentFactoryAddress,
+		//"--agent-factory-at", agentFactoryAddress,
 		"--registry-at", registryAddress,
 		"--yes",
 	}
@@ -399,20 +414,20 @@ func serviceIsPublishedToNetwork(dir string, serviceFile string) (err error) {
 		return err
 	}
 
-	agentAddress, err = getPropertyFromFile(
-		dir+"/"+serviceFile,
-		"\"agentAddress\":",
-	)
+	// agentAddress, err = getPropertyFromFile(
+	// 	dir+"/"+serviceFile,
+	// 	"\"agentAddress\":",
+	// )
 
-	if err != nil {
-		return err
-	}
+	// if err != nil {
+	// 	return err
+	// }
 
-	if len(agentAddress) < 2 {
-		return errors.New("Len of accoagent address is to small: " + agentAddress)
-	}
+	// if len(agentAddress) < 2 {
+	// 	return errors.New("Len of accoagent address is to small: " + agentAddress)
+	// }
 
-	agentAddress = agentAddress[1 : len(agentAddress)-1]
+	// agentAddress = agentAddress[1 : len(agentAddress)-1]
 
 	serviceIsPublished = true
 

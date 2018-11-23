@@ -11,33 +11,29 @@ Feature: Publish example service
 			| organization        |
 			| ExampleOrganization |
 
-	Scenario: Publish example service
-		When  example-service is registered
-			| name                | service_spec | price | endpoint              | tags            | description     |
-			| ExampleOrganization | service_spec | 1     | http://localhost:8080 | example service | Example service |
-		When example-service is published to network
-		When example-service is run with snet-daemon
-			| daemon port | ethereum endpoint port | passthrough endpoint port |
-			| 8080        | 8545                   | 5001                      |
-		Then SingularityNET job is created
-			| max price |
-			| 100000000 |
+	# Scenario: Publish example service
+	# 	When  example-service is registered
+	# 		| name                | service_spec | price | endpoint              | tags            | description     |
+	# 		| ExampleOrganization | service_spec | 1     | http://localhost:8080 | example service | Example service |
+	# 	When example-service is published to network
+	# 	When example-service is run with snet-daemon
+	# 		| daemon port | ethereum endpoint port | passthrough endpoint port |
+	# 		| 8080        | 8545                   | 5001                      |
+	# 	Then SingularityNET job is created
+	# 		| max price |
+	# 		| 100000000 |
 
 	Scenario: Publish dnn-model-services
 		When  dnn-model service is registered
-			| name                | service_spec         | price | endpoint              | tags        | description         |
-			| ExampleOrganization | service/service_spec | 1     | http://localhost:8090 | dnn service | DNN Example service |
-		When  dnn-model service is published to network
-		When  dnn-model mpe service is registered
-			| name                | display name      | endpoint              | group  |
-			| DNNModelService     | DNN Model Service | http://localhost:8090 | group1 |
+			| name            | display name      | organization name   | daemon port |
+			| DNNModelService | DNN Model Service | ExampleOrganization | 8090        |
 		When  dnn-model service snet-daemon config file is created
-            | daemon port | ethereum endpoint port | passthrough endpoint port | price |
-            | 8090        | 8545                   | 7003                      | 10    |
+            | name            | organization name   | daemon port | price |
+            | DNNModelService | ExampleOrganization | 8090        | 10    |
 		When dnn-model service is running
-		When dnn-model open the payment channel
-		When dnn-model compile protobuf
 		Then dnn-model make a call using payment channel
+            | name            | organization name   | daemon port |
+            | DNNModelService | ExampleOrganization | 8090        |
 		Then dnn-model claim channel by treasurer server
-			| ethereum endpoint port |
-			| 8545                   |
+            | name            | organization name   | daemon port |
+            | DNNModelService | ExampleOrganization | 8090        |

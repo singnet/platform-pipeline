@@ -23,12 +23,8 @@ func FeatureContext(s *godog.Suite) {
 
 	// dnn-model-services sample
 	s.Step(`^dnn-model service is registered$`, dnnmodelServiceIsRegistered)
-	s.Step(`^dnn-model service is published to network$`, dnnmodelServiceIsPublishedToNetwork)
-	s.Step(`^dnn-model mpe service is registered$`, dnnmodelMpeServiceIsRegistered)
 	s.Step(`^dnn-model service snet-daemon config file is created$`, dnnmodelServiceSnetdaemonConfigFileIsCreated)
 	s.Step(`^dnn-model service is running$`, dnnmodelServiceIsRunning)
-	s.Step(`^dnn-model open the payment channel$`, dnnmodelOpenThePaymentChannel)
-	s.Step(`^dnn-model compile protobuf$`, dnnmodelCompileProtobuf)
 	s.Step(`^dnn-model make a call using payment channel$`, dnnmodelMakeACallUsingPaymentChannel)
 	s.Step(`^dnn-model claim channel by treasurer server$`, dnnmodelClaimChannelByTreasurerServer)
 }

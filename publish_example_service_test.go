@@ -23,7 +23,6 @@ func exampleserviceIsRunWithSnetdaemon(table *gherkin.DataTable) error {
 
 	snetdConfigTemplate := `
 	{
-    "AGENT_CONTRACT_ADDRESS": "%s",
     "AUTO_SSL_DOMAIN": "",
     "AUTO_SSL_CACHE_DIR": "",
     "BLOCKCHAIN_ENABLED": true,
@@ -45,7 +44,7 @@ func exampleserviceIsRunWithSnetdaemon(table *gherkin.DataTable) error {
     }`
 
 	snetdConfig := fmt.Sprintf(snetdConfigTemplate,
-		agentAddress, daemonPort, ethereumEndpointPort, passthroughEndpointPort, accountPrivateKey)
+		daemonPort, ethereumEndpointPort, passthroughEndpointPort, accountPrivateKey)
 
 	file := exampleServiceDir + "/snetd.config.json"
 	err := writeToFile(file, snetdConfig)
@@ -96,8 +95,6 @@ func singularityNETJobIsCreated(table *gherkin.DataTable) error {
 	maxPrice := getTableValue(table, "max price")
 
 	args := []string{
-		"agent",
-		"--at", agentAddress,
 		"create-jobs",
 		"--funded",
 		"--signed",
@@ -120,7 +117,6 @@ func singularityNETJobIsCreated(table *gherkin.DataTable) error {
 	args = []string{
 		"client", "call", "classify",
 		fmt.Sprintf(`{"image_type": "jpg", "image": "%s"}`, testImage),
-		"--agent-at", agentAddress,
 	}
 
 	command = ExecCommand{
