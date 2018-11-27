@@ -23,9 +23,8 @@ func dnnmodelServiceIsRegistered(table *gherkin.DataTable) (err error) {
 	cmd := NewCommand().Dir(dnnModelServicesDir)
 
 	cmd.
-		// TBD: convert organizationAddress to use right checksum
 		Run("snet service metadata_init service/service_spec \"%s\" %s --multipartyescrow %s",
-			displayName, "0x3b2b3C2e2E7C93db335E69D827F3CC4bC2A2A2cB", multiPartyEscrow).
+			displayName, organizationAddress, multiPartyEscrow).
 		CheckFileContains(metadata, "display_name", displayName).
 		Run("snet service metadata_set_fixed_price 0.1").
 		CheckFileContains(metadata, "fixed_price", "price_in_cogs", "10000000").
@@ -193,12 +192,11 @@ func dnnmodelClaimChannelByTreasurerServer(table *gherkin.DataTable) (err error)
 	cmd.
 		Run("snetd list channels").
 		Run("snetd claim --channel-id 0").
-		// TBD: convert address to checksum
 		Run("snet client balance"+
-			" --account 0x3b2b3C2e2E7C93db335E69D827F3CC4bC2A2A2cB"+
+			" --account %s"+
 			" --snt %s"+
 			" --multipartyescrow %s",
-			singnetTokenAddress, multiPartyEscrow)
+			organizationAddress, singnetTokenAddress, multiPartyEscrow)
 
 	return cmd.Err()
 }

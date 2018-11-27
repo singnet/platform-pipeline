@@ -4,6 +4,7 @@ import (
 	"errors"
 	"log"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/DATA-DOG/godog/gherkin"
 )
 
@@ -49,6 +50,12 @@ func ethereumNetworkIsRunningOnPort(port int) (err error) {
 	return initAddresses(output)
 }
 
+func toChecksumAddress(hexAddress string) string {
+	address := common.HexToAddress(hexAddress)
+	mixedAddress := common.NewMixedcaseAddress(address)
+	return mixedAddress.Address().String()
+}
+
 func initAddresses(output string) (err error) {
 
 	snetIdentityAddress, err = getPropertyFromFile(output, "(0)")
@@ -56,10 +63,13 @@ func initAddresses(output string) (err error) {
 		return
 	}
 
+	snetIdentityAddress = toChecksumAddress(snetIdentityAddress)
+
 	organizationAddress, err = getPropertyFromFile(output, "(1)")
 	if err != nil {
 		return
 	}
+	organizationAddress = toChecksumAddress(organizationAddress)
 
 	treasurerPrivateKey, err = getPrivateKey("1", output)
 	if err != nil {
