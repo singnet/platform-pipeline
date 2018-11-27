@@ -114,8 +114,15 @@ func (command *ExecCommand) checkContains() *ExecCommand {
 
 	if command.async {
 		fmt.Println("check file async: ", command.containsFile, "strings: ", command.containsStrings)
-		_, err := checkWithTimeout(15000, 500, checkFileContainsStringsFunc(fileContains))
+		exists, err := checkWithTimeout(15000, 500, checkFileContainsStringsFunc(fileContains))
 		command.err = err
+
+		if err != nil && !exists {
+			msg := fmt.Sprintf("file %s does not contains strings: %v",
+				command.containsFile, command.containsStrings)
+			command.err = errors.New(msg)
+		}
+
 	} else {
 		ok, err := checkFileContainsStrings(fileContains)
 		command.err = fileContainsError(fileContains, ok, err)
