@@ -45,8 +45,8 @@ func ethereumNetworkIsRunningOnPort(port int) (err error) {
 
 	err = NewCommand().Dir(platformContractsDir).
 		Output(outputFile).
-		CheckOutput("Listening on 127.0.0.1:" + toString(port)).
 		RunAsync("./node_modules/.bin/ganache-cli --mnemonic \"gauge enact biology destroy normal tunnel slight slide wide sauce ladder produce\"").
+		CheckOutput("Listening on 127.0.0.1:" + toString(port)).
 		Err()
 
 	if err != nil {
@@ -110,9 +110,9 @@ func contractsAreDeployedUsingTruffle() (err error) {
 	}
 
 	command := ExecCommand{
-		Command:   "./node_modules/.bin/truffle",
-		Directory: platformContractsDir,
-		Args:      []string{"compile"},
+		command:   "./node_modules/.bin/truffle",
+		directory: platformContractsDir,
+		args:      []string{"compile"},
 	}
 
 	err = runCommand(command)
@@ -122,8 +122,8 @@ func contractsAreDeployedUsingTruffle() (err error) {
 	}
 
 	output := logPath + "/migrate.out"
-	command.Args = []string{"migrate", "--network", "local"}
-	command.OutputFile = output
+	command.args = []string{"migrate", "--network", "local"}
+	command.outputFile = output
 	err = runCommand(command)
 
 	singnetTokenAddress, err = getPropertyFromFile(output, "SingularityNetToken:")
@@ -153,9 +153,9 @@ func ipfsIsRunning(portAPI int, portGateway int) (err error) {
 	env := []string{"IPFS_PATH=" + envGoPath + "/ipfs"}
 
 	command := ExecCommand{
-		Command: "ipfs",
-		Env:     env,
-		Args:    []string{"init"},
+		command: "ipfs",
+		env:     env,
+		args:    []string{"init"},
 	}
 
 	err = runCommand(command)
@@ -164,7 +164,7 @@ func ipfsIsRunning(portAPI int, portGateway int) (err error) {
 		return
 	}
 
-	command.Args = []string{"bootstrap", "rm", "--all"}
+	command.args = []string{"bootstrap", "rm", "--all"}
 	err = runCommand(command)
 
 	if err != nil {
@@ -172,7 +172,7 @@ func ipfsIsRunning(portAPI int, portGateway int) (err error) {
 	}
 
 	addressAPI := "/ip4/127.0.0.1/tcp/" + toString(portAPI)
-	command.Args = []string{"config", "Addresses.API", addressAPI}
+	command.args = []string{"config", "Addresses.API", addressAPI}
 	err = runCommand(command)
 
 	if err != nil {
@@ -180,7 +180,7 @@ func ipfsIsRunning(portAPI int, portGateway int) (err error) {
 	}
 
 	addressGateway := "/ip4/0.0.0.0/tcp/" + toString(portGateway)
-	command.Args = []string{"config", "Addresses.Gateway", addressGateway}
+	command.args = []string{"config", "Addresses.Gateway", addressGateway}
 	err = runCommand(command)
 
 	if err != nil {
@@ -188,8 +188,8 @@ func ipfsIsRunning(portAPI int, portGateway int) (err error) {
 	}
 
 	outputFile := logPath + "/ipfs.log"
-	command.OutputFile = outputFile
-	command.Args = []string{"daemon"}
+	command.outputFile = outputFile
+	command.args = []string{"daemon"}
 	err = runCommandAsync(command)
 
 	if err != nil {
@@ -225,8 +225,8 @@ func identityIsCreatedWithUser(user string) (err error) {
 	}
 
 	command := ExecCommand{
-		Command: "snet",
-		Args:    []string{"identity", "create", user, "key", "--private-key", identiyPrivateKey},
+		command: "snet",
+		args:    []string{"identity", "create", user, "key", "--private-key", identiyPrivateKey},
 	}
 	err = runCommand(command)
 
@@ -234,7 +234,7 @@ func identityIsCreatedWithUser(user string) (err error) {
 		return
 	}
 
-	command.Args = []string{"identity", "snet-user"}
+	command.args = []string{"identity", "snet-user"}
 	return runCommand(command)
 }
 
@@ -255,8 +255,8 @@ default_eth_rpc_endpoint = http://localhost:` + toString(endpointEthereumRPC)
 	}
 
 	command := ExecCommand{
-		Command: "snet",
-		Args:    []string{"network", "local"},
+		command: "snet",
+		args:    []string{"network", "local"},
 	}
 	err = runCommand(command)
 
@@ -285,8 +285,8 @@ func snetIsConfiguredWithIPFSEndpoint(endpointIPFS int) (err error) {
 	}
 
 	command := ExecCommand{
-		Command: "sed",
-		Args:    []string{"-ie", "/ipfs/,+2d", snetConfigFile},
+		command: "sed",
+		args:    []string{"-ie", "/ipfs/,+2d", snetConfigFile},
 	}
 
 	err = runCommand(command)

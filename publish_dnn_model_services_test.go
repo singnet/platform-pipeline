@@ -23,12 +23,12 @@ func dnnmodelServiceIsRegistered(table *gherkin.DataTable) (err error) {
 	cmd := NewCommand().Dir(dnnModelServicesDir)
 
 	cmd.
-		CheckFileContains(metadata, "display_name", displayName).
 		// TBD: convert organizationAddress to use right checksum
 		Run("snet service metadata_init service/service_spec \"%s\" %s --multipartyescrow %s",
 			displayName, "0x3b2b3C2e2E7C93db335E69D827F3CC4bC2A2A2cB", multiPartyEscrow).
-		CheckFileContains(metadata, "fixed_price", "price_in_cogs", "10000000").
+		CheckFileContains(metadata, "display_name", displayName).
 		Run("snet service metadata_set_fixed_price 0.1").
+		CheckFileContains(metadata, "fixed_price", "price_in_cogs", "10000000").
 		Run("snet service metadata_add_endpoints http://localhost:%s", daemonPort).
 		Run("snet service publish %s %s --registry %s -y", organization, name, registryAddress)
 
@@ -105,8 +105,8 @@ func dnnmodelServiceIsRunning() (err error) {
 	cmd.
 		Run("./buildproto.sh").
 		Output(output).
-		CheckOutput("starting daemon").
-		RunAsync("python3 run_basic_service.py --daemon-config-path .")
+		RunAsync("python3 run_basic_service.py --daemon-config-path .").
+		CheckOutput("starting daemon")
 
 	return cmd.Err()
 }
