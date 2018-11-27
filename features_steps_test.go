@@ -15,12 +15,6 @@ func FeatureContext(s *godog.Suite) {
 	s.Step(`^snet is configured with IPFS endpoint (\d+)$`, snetIsConfiguredWithIPFSEndpoint)
 	s.Step(`^Organization is added:$`, organizationIsAdded)
 
-	// example-service sample
-	s.Step(`^example-service is registered$`, exampleserviceIsRegistered)
-	s.Step(`^example-service is published to network$`, exampleserviceIsPublishedToNetwork)
-	s.Step(`^example-service is run with snet-daemon$`, exampleserviceIsRunWithSnetdaemon)
-	s.Step(`^SingularityNET job is created$`, singularityNETJobIsCreated)
-
 	// dnn-model-services sample
 	s.Step(`^dnn-model service is registered$`, dnnmodelServiceIsRegistered)
 	s.Step(`^dnn-model service snet-daemon config file is created$`, dnnmodelServiceSnetdaemonConfigFileIsCreated)

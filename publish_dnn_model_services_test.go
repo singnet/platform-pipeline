@@ -12,9 +12,6 @@ const (
 	configServiceName = "basic_service_one"
 )
 
-type Command struct {
-}
-
 func dnnmodelServiceIsRegistered(table *gherkin.DataTable) (err error) {
 
 	name := getTableValue(table, "name")

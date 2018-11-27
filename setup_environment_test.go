@@ -19,13 +19,10 @@ var identiyPrivateKey string
 
 var snetIdentityAddress string
 
-// var agentFactoryAddress string
 var singnetTokenAddress string
 var registryAddress string
 var multiPartyEscrow string
 var organizationAddress string
-
-// var agentAddress string
 
 var environmentIsSet = false
 var serviceIsPublished = false
@@ -46,33 +43,20 @@ func ethereumNetworkIsRunningOnPort(port int) (err error) {
 
 	outputFile := logPath + "/ganache.log"
 
-	fileContains := checkFileContains{
-		output:  outputFile,
-		strings: []string{"Listening on 127.0.0.1:" + toString(port)},
-	}
-
-	args := []string{"--mnemonic", "gauge enact biology destroy normal tunnel slight slide wide sauce ladder produce"}
-	command := ExecCommand{
-		Command:    "./node_modules/.bin/ganache-cli",
-		Directory:  platformContractsDir,
-		OutputFile: outputFile,
-		Args:       args,
-	}
-
-	err = runCommandAsync(command)
+	err = NewCommand().Dir(platformContractsDir).
+		Output(outputFile).
+		CheckOutput("Listening on 127.0.0.1:" + toString(port)).
+		RunAsync("./node_modules/.bin/ganache-cli --mnemonic \"gauge enact biology destroy normal tunnel slight slide wide sauce ladder produce\"").
+		Err()
 
 	if err != nil {
 		return
 	}
 
-	exists, err := checkWithTimeout(5000, 500, checkFileContainsStringsFunc(fileContains))
-	if err != nil {
-		return
-	}
+	return initContractAddresses(outputFile)
+}
 
-	if !exists {
-		return errors.New("Etherium networks is not started")
-	}
+func initContractAddresses(outputFile string) (err error) {
 
 	snetIdentityAddress, err = getPropertyFromFile(outputFile, "(0)")
 	if err != nil {
@@ -151,11 +135,6 @@ func contractsAreDeployedUsingTruffle() (err error) {
 	if err != nil {
 		return
 	}
-
-	// agentFactoryAddress, err = getPropertyFromFile(output, "AgentFactory:")
-	// if err != nil {
-	// 	return
-	// }
 
 	multiPartyEscrow, err = getPropertyFromFile(output, "MultiPartyEscrow:")
 	if err != nil {
@@ -336,103 +315,6 @@ func organizationIsAdded(table *gherkin.DataTable) (err error) {
 		Err()
 }
 
-func organizationIsAdded2(table *gherkin.DataTable) (err error) {
-
-	if environmentIsSet {
-		return
-	}
-
-	organization := getTableValue(table, "organization")
-
-	args := []string{
-		"contract", "Registry",
-		"--at", registryAddress,
-		"createOrganization", organization,
-		"[\"" + organizationAddress + "\"]",
-		"--transact",
-		"--yes",
-	}
-
-	command := ExecCommand{
-		Command: "snet",
-		Args:    args,
-	}
-
-	err = runCommand(command)
-
-	environmentIsSet = true
-
-	return
-}
-
-func serviceIsRegistered(table *gherkin.DataTable, dir string) (err error) {
-
-	if serviceIsPublished {
-		return
-	}
-
-	name := getTableValue(table, "name")
-	serviceSpec := getTableValue(table, "service_spec")
-	price := getTableValue(table, "price")
-	endpoint := getTableValue(table, "endpoint")
-	tags := getTableValue(table, "tags")
-	description := getTableValue(table, "description")
-
-	command := ExecCommand{
-		Command:   "snet",
-		Directory: dir,
-		Input:     []string{"", serviceSpec, name, "", price, endpoint, tags, description},
-		Args:      []string{"service", "init"},
-	}
-
-	return runCommand(command)
-}
-
-func serviceIsPublishedToNetwork(dir string, serviceFile string) (err error) {
-
-	if serviceIsPublished {
-		return
-	}
-
-	args := []string{
-		"service", "publish", "local",
-		"--config", serviceFile,
-		//"--agent-factory-at", agentFactoryAddress,
-		"--registry-at", registryAddress,
-		"--yes",
-	}
-
-	command := ExecCommand{
-		Command:   "snet",
-		Directory: dir,
-		Args:      args,
-	}
-
-	err = runCommand(command)
-
-	if err != nil {
-		return err
-	}
-
-	// agentAddress, err = getPropertyFromFile(
-	// 	dir+"/"+serviceFile,
-	// 	"\"agentAddress\":",
-	// )
-
-	// if err != nil {
-	// 	return err
-	// }
-
-	// if len(agentAddress) < 2 {
-	// 	return errors.New("Len of accoagent address is to small: " + agentAddress)
-	// }
-
-	// agentAddress = agentAddress[1 : len(agentAddress)-1]
-
-	serviceIsPublished = true
-
-	return
-}
 
 func getTableValue(table *gherkin.DataTable, column string) string {
 

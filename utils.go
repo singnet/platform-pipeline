@@ -97,7 +97,7 @@ func (command *ExecCommand) checkContains(async bool) *ExecCommand {
 
 	if async {
 		fmt.Println("check file async: ", command.containsFile, "strings: ", command.containsStrings)
-		_, err := checkWithTimeout(5000, 500, checkFileContainsStringsFunc(fileContains))
+		_, err := checkWithTimeout(15000, 500, checkFileContainsStringsFunc(fileContains))
 		command.err = err
 	} else {
 		ok, err := checkFileContainsStrings(fileContains)
