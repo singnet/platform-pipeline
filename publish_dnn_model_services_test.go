@@ -53,7 +53,7 @@ func dnnmodelServiceSnetdaemonConfigFileIsCreated(table *gherkin.DataTable) (err
 		"PASSTHROUGH_ENDPOINT": "http://localhost:7003",
 		"IPFS_END_POINT": "http://localhost:5002",
 		"REGISTRY_ADDRESS_KEY": "%s",
-		"PRIVATE_KEY": "%s",
+		"PRIVATE_KEY": "1000000000000000000000000000000000000000000000000000000000000000",
 		"price_per_call": %s,
 		"log": {
 		  "level": "debug",
@@ -83,7 +83,6 @@ func dnnmodelServiceSnetdaemonConfigFileIsCreated(table *gherkin.DataTable) (err
 		daemonPort,
 		daemonPort,
 		registryAddress,
-		accountPrivateKey,
 		price,
 	)
 
