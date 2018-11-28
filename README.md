@@ -35,6 +35,7 @@ For example, test organization registering:
 * Go to the platform-pipeline directory
 * Run godog
   * > godog
+
 It will print stub methods which needs to be implemented:
 ```go
 //You can implement step definitions for undefined steps with these snippets:
@@ -106,7 +107,7 @@ func organizationIsIncludedIntoTheList(table *gherkin.DataTable) error {
 
 	return NewCommand().
 		Output(output).
-		Run("snet contract").
+		Run("snet organization list").
 		CheckOutput(organizationName).
 		Err()
 }
