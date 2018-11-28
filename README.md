@@ -16,7 +16,6 @@ SingularityNET Platform CI/CD Pipeline Repository
 * Run CircleCI
   * > circleci build
 
-
 ## Add a new test scenario
 
 Integration tests use [GoDog](https://github.com/DATA-DOG/godog) for test writing which is based on
@@ -38,7 +37,6 @@ For example, test organization registering:
   * > godog
 It will print stub methods which needs to be implemented:
 ```go
-
 //You can implement step definitions for undefined steps with these snippets:
 
 func organizationIsRegistered(arg1 *gherkin.DataTable) error {
@@ -114,7 +112,7 @@ func organizationIsIncludedIntoTheList(table *gherkin.DataTable) error {
 }
 ```
 
-`Note`: Background in *.feature file is executed before each scenario. It means that in case of
+`Note`: Background in publish_service.feature file is executed before each scenario. It means that in case of
 more than one scenario the background tests should be updated to be executed only once.
 
 
