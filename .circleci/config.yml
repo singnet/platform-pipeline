@@ -102,6 +102,7 @@ jobs:
         name: Run integration tests
         command: |
           export PATH=$PATH:$GOPATH/bin
+          export IPFS_PATH=$GOPATH/ipfs
           mkdir $GOPATH/log
           go get github.com/DATA-DOG/godog/cmd/godog
           # Disable TensorFlow warnings wich pollute example-service log file

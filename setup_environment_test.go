@@ -18,15 +18,11 @@ var accountPrivateKey string
 var identiyPrivateKey string
 
 var snetIdentityAddress string
-var agentFactoryAddress string
+
 var singnetTokenAddress string
 var registryAddress string
 var multiPartyEscrow string
 var organizationAddress string
-var agentAddress string
-
-var environmentIsSet = false
-var serviceIsPublished = false
 
 func init() {
 	platformContractsDir = envSingnetRepos + "/platform-contracts"
@@ -38,61 +34,44 @@ func init() {
 
 func ethereumNetworkIsRunningOnPort(port int) (err error) {
 
-	if environmentIsSet {
-		return
-	}
+	output := logPath + "/ganache.log"
 
-	outputFile := logPath + "/ganache.log"
-
-	fileContains := checkFileContains{
-		output:  outputFile,
-		strings: []string{"Listening on 127.0.0.1:" + toString(port)},
-	}
-
-	args := []string{"--mnemonic", "gauge enact biology destroy normal tunnel slight slide wide sauce ladder produce"}
-	command := ExecCommand{
-		Command:    "./node_modules/.bin/ganache-cli",
-		Directory:  platformContractsDir,
-		OutputFile: outputFile,
-		Args:       args,
-	}
-
-	err = runCommandAsync(command)
+	err = NewCommand().Dir(platformContractsDir).
+		Output(output).
+		RunAsync("./node_modules/.bin/ganache-cli --mnemonic \"gauge enact biology destroy normal tunnel slight slide wide sauce ladder produce\"").
+		CheckOutput("Listening on 127.0.0.1:" + toString(port)).
+		Err()
 
 	if err != nil {
 		return
 	}
 
-	exists, err := checkWithTimeout(5000, 500, checkFileContainsStringsFunc(fileContains))
+	return initAddresses(output)
+}
+
+func initAddresses(output string) (err error) {
+
+	snetIdentityAddress, err = getPropertyFromFile(output, "(0)")
 	if err != nil {
 		return
 	}
 
-	if !exists {
-		return errors.New("Etherium networks is not started")
-	}
-
-	snetIdentityAddress, err = getPropertyFromFile(outputFile, "(0)")
+	organizationAddress, err = getPropertyFromFile(output, "(1)")
 	if err != nil {
 		return
 	}
 
-	organizationAddress, err = getPropertyFromFile(outputFile, "(1)")
+	treasurerPrivateKey, err = getPrivateKey("1", output)
 	if err != nil {
 		return
 	}
 
-	treasurerPrivateKey, err = getPrivateKey("1", outputFile)
+	accountPrivateKey, err = getPrivateKey("2", output)
 	if err != nil {
 		return
 	}
 
-	accountPrivateKey, err = getPrivateKey("2", outputFile)
-	if err != nil {
-		return
-	}
-
-	identiyPrivateKey, err = getPropertyWithIndexFromFile(outputFile, "(0)", 1)
+	identiyPrivateKey, err = getPropertyWithIndexFromFile(output, "(0)", 1)
 	if err != nil {
 		return
 	}
@@ -112,33 +91,30 @@ func getPrivateKey(index string, file string) (key string, err error) {
 		return
 	}
 
-	key = key[2:len(key)]
+	key = key[2:]
 
 	return
 }
 
 func contractsAreDeployedUsingTruffle() (err error) {
 
-	if environmentIsSet {
-		return
-	}
+	output := logPath + "/migrate.out"
 
-	command := ExecCommand{
-		Command:   "./node_modules/.bin/truffle",
-		Directory: platformContractsDir,
-		Args:      []string{"compile"},
-	}
-
-	err = runCommand(command)
+	err = NewCommand().
+		Dir(platformContractsDir).
+		Run("./node_modules/.bin/truffle compile").
+		Output(output).
+		Run("./node_modules/.bin/truffle migrate --network local").
+		Err()
 
 	if err != nil {
 		return
 	}
 
-	output := logPath + "/migrate.out"
-	command.Args = []string{"migrate", "--network", "local"}
-	command.OutputFile = output
-	err = runCommand(command)
+	return initContractAddresses(output)
+}
+
+func initContractAddresses(output string) (err error) {
 
 	singnetTokenAddress, err = getPropertyFromFile(output, "SingularityNetToken:")
 	if err != nil {
@@ -146,11 +122,6 @@ func contractsAreDeployedUsingTruffle() (err error) {
 	}
 
 	registryAddress, err = getPropertyFromFile(output, "Registry:")
-	if err != nil {
-		return
-	}
-
-	agentFactoryAddress, err = getPropertyFromFile(output, "AgentFactory:")
 	if err != nil {
 		return
 	}
@@ -165,103 +136,39 @@ func contractsAreDeployedUsingTruffle() (err error) {
 
 func ipfsIsRunning(portAPI int, portGateway int) (err error) {
 
-	if environmentIsSet {
-		return
-	}
-
-	env := []string{"IPFS_PATH=" + envGoPath + "/ipfs"}
-
-	command := ExecCommand{
-		Command: "ipfs",
-		Env:     env,
-		Args:    []string{"init"},
-	}
-
-	err = runCommand(command)
-
-	if err != nil {
-		return
-	}
-
-	command.Args = []string{"bootstrap", "rm", "--all"}
-	err = runCommand(command)
-
-	if err != nil {
-		return
-	}
-
 	addressAPI := "/ip4/127.0.0.1/tcp/" + toString(portAPI)
-	command.Args = []string{"config", "Addresses.API", addressAPI}
-	err = runCommand(command)
-
-	if err != nil {
-		return
-	}
-
 	addressGateway := "/ip4/0.0.0.0/tcp/" + toString(portGateway)
-	command.Args = []string{"config", "Addresses.Gateway", addressGateway}
-	err = runCommand(command)
-
-	if err != nil {
-		return
-	}
-
 	outputFile := logPath + "/ipfs.log"
-	command.OutputFile = outputFile
-	command.Args = []string{"daemon"}
-	err = runCommandAsync(command)
 
-	if err != nil {
-		return
-	}
+	err = NewCommand().
+		Run("ipfs init").
+		Run("ipfs bootstrap rm --all").
+		Run("ipfs config Addresses.API %s", addressAPI).
+		Run("ipfs config Addresses.Gateway %s", addressGateway).
+		Output(outputFile).
+		RunAsync("ipfs daemon").
+		CheckOutput(
+		"Daemon is ready",
+		"server listening on " + addressAPI,
+		"server listening on " + addressGateway).
+		Err()
 
-	fileContains := checkFileContains{
-		output: outputFile,
-		strings: []string{
-			"Daemon is ready",
-			"server listening on " + addressAPI,
-			"server listening on " + addressGateway,
-		},
-	}
 
-	exists, err := checkWithTimeout(5000, 500, checkFileContainsStringsFunc(fileContains))
-
-	if err != nil {
-		return
-	}
-
-	if !exists {
-		return errors.New("Etherium networks is not started")
-	}
-
-	return nil
+	return
 }
 
 func identityIsCreatedWithUser(user string) (err error) {
 
-	if environmentIsSet {
-		return
-	}
+	err = NewCommand().
+		Run("snet identity create %s key --private-key %s", user, identiyPrivateKey).
+		Run("snet identity snet-user").
+		Err()
 
-	command := ExecCommand{
-		Command: "snet",
-		Args:    []string{"identity", "create", user, "key", "--private-key", identiyPrivateKey},
-	}
-	err = runCommand(command)
+	return
 
-	if err != nil {
-		return
-	}
-
-	command.Args = []string{"identity", "snet-user"}
-	return runCommand(command)
 }
 
 func snetIsConfiguredWithEthereumRPCEndpoint(endpointEthereumRPC int) (err error) {
-
-	if environmentIsSet {
-		return
-	}
 
 	config := `
 [network.local]
@@ -273,42 +180,19 @@ default_eth_rpc_endpoint = http://localhost:` + toString(endpointEthereumRPC)
 		return
 	}
 
-	command := ExecCommand{
-		Command: "snet",
-		Args:    []string{"network", "local"},
-	}
-	err = runCommand(command)
+	err = NewCommand().
+		Run("snet network local").
+		CheckFileContains(snetConfigFile, "session").
+		Err()
 
-	if err != nil {
-		return
-	}
-
-	fileContains := checkFileContains{
-		output:  snetConfigFile,
-		strings: []string{"session"},
-	}
-
-	exists, e := checkWithTimeout(5000, 500, checkFileContainsStringsFunc(fileContains))
-
-	if !exists {
-		return errors.New("snet config file is not created: " + snetConfigFile)
-	}
-
-	return e
+	return
 }
 
 func snetIsConfiguredWithIPFSEndpoint(endpointIPFS int) (err error) {
 
-	if environmentIsSet {
-		return
-	}
-
-	command := ExecCommand{
-		Command: "sed",
-		Args:    []string{"-ie", "/ipfs/,+2d", snetConfigFile},
-	}
-
-	err = runCommand(command)
+	err = NewCommand().
+		Run("sed -ie '/ipfs/,+2d' %s", snetConfigFile).
+		Err()
 
 	if err != nil {
 		return
@@ -323,101 +207,13 @@ default_ipfs_endpoint = http://localhost:` + toString(endpointIPFS)
 
 func organizationIsAdded(table *gherkin.DataTable) (err error) {
 
-	if environmentIsSet {
-		return
-	}
-
 	organization := getTableValue(table, "organization")
 
-	args := []string{
-		"contract", "Registry",
-		"--at", registryAddress,
-		"createOrganization", organization,
-		"[\"" + organizationAddress + "\"]",
-		"--transact",
-		"--yes",
-	}
-
-	command := ExecCommand{
-		Command: "snet",
-		Args:    args,
-	}
-
-	err = runCommand(command)
-
-	environmentIsSet = true
-
-	return
+	return NewCommand().
+		Run("snet organization create %s --registry-at %s -y", organization, registryAddress).
+		Err()
 }
 
-func serviceIsRegistered(table *gherkin.DataTable, dir string) (err error) {
-
-	if serviceIsPublished {
-		return
-	}
-
-	name := getTableValue(table, "name")
-	serviceSpec := getTableValue(table, "service_spec")
-	price := getTableValue(table, "price")
-	endpoint := getTableValue(table, "endpoint")
-	tags := getTableValue(table, "tags")
-	description := getTableValue(table, "description")
-
-	command := ExecCommand{
-		Command:   "snet",
-		Directory: dir,
-		Input:     []string{"", serviceSpec, name, "", price, endpoint, tags, description},
-		Args:      []string{"service", "init"},
-	}
-
-	return runCommand(command)
-}
-
-func serviceIsPublishedToNetwork(dir string, serviceFile string) (err error) {
-
-	if serviceIsPublished {
-		return
-	}
-
-	args := []string{
-		"service", "publish", "local",
-		"--config", serviceFile,
-		"--agent-factory-at", agentFactoryAddress,
-		"--registry-at", registryAddress,
-		"--yes",
-	}
-
-	command := ExecCommand{
-		Command:   "snet",
-		Directory: dir,
-		Args:      args,
-	}
-
-	err = runCommand(command)
-
-	if err != nil {
-		return err
-	}
-
-	agentAddress, err = getPropertyFromFile(
-		dir+"/"+serviceFile,
-		"\"agentAddress\":",
-	)
-
-	if err != nil {
-		return err
-	}
-
-	if len(agentAddress) < 2 {
-		return errors.New("Len of accoagent address is to small: " + agentAddress)
-	}
-
-	agentAddress = agentAddress[1 : len(agentAddress)-1]
-
-	serviceIsPublished = true
-
-	return
-}
 
 func getTableValue(table *gherkin.DataTable, column string) string {
 

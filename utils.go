@@ -13,18 +13,6 @@ import (
 	"time"
 )
 
-type checkWithTimeoutType func() (bool, error)
-
-// ExecCommand is used to run command from command line
-type ExecCommand struct {
-	Command    string
-	Directory  string
-	Env        []string
-	Input      []string
-	OutputFile string
-	Args       []string
-}
-
 var envHome string
 var envSingnetRepos string
 var envGoPath string
@@ -37,6 +25,121 @@ func init() {
 	envGoPath = os.Getenv("GOPATH")
 	logPath = envGoPath + "/log"
 	log.Printf("SINGNET_REPOS=%s\n", envSingnetRepos)
+}
+
+type checkWithTimeoutType func() (bool, error)
+
+// ExecCommand is used to run command from command line
+type ExecCommand struct {
+	command         string
+	directory       string
+	env             []string
+	input           []string
+	outputFile      string
+	args            []string
+	async           bool
+	err             error
+	containsFile    string
+	containsStrings []string
+}
+
+// NewCommand builder function
+func NewCommand() *ExecCommand {
+	return &ExecCommand{command: "sh"}
+}
+
+// Dir set dir
+func (command *ExecCommand) Dir(dir string) *ExecCommand {
+	command.directory = dir
+	return command
+}
+
+// Output set output file
+func (command *ExecCommand) Output(outputFile string) *ExecCommand {
+	command.outputFile = outputFile
+	return command
+}
+
+// CheckOutput set output file
+func (command *ExecCommand) CheckOutput(strings ...string) *ExecCommand {
+	return command.CheckFileContains(command.outputFile, strings...)
+}
+
+// CheckFileContains set output file
+func (command *ExecCommand) CheckFileContains(file string, strings ...string) *ExecCommand {
+	command.containsFile = file
+	command.containsStrings = strings
+	return command.checkContains()
+}
+
+// Run exec command
+func (command *ExecCommand) Run(format string, a ...interface{}) *ExecCommand {
+	command.async = false
+	return command.run(format, a...)
+}
+
+// RunAsync exec command asynchroniously
+func (command *ExecCommand) RunAsync(format string, a ...interface{}) *ExecCommand {
+	command.async = true
+	return command.run(format, a...)
+}
+
+func (command *ExecCommand) run(format string, a ...interface{}) *ExecCommand {
+
+	if command.err != nil {
+		return command
+	}
+
+	command.args = []string{"-c", fmt.Sprintf(format, a...)}
+
+	if command.async {
+		command.err = runCommandAsync(*command)
+	} else {
+		command.err = runCommand(*command)
+	}
+
+	return command
+}
+
+func (command *ExecCommand) checkContains() *ExecCommand {
+
+	if command.err != nil || command.containsFile == "" {
+		return command
+	}
+
+	fileContains := checkFileContains{
+		output:  command.containsFile,
+		strings: command.containsStrings,
+	}
+
+	if command.async {
+		fmt.Println("check file async: ", command.containsFile, "strings: ", command.containsStrings)
+		exists, err := checkWithTimeout(15000, 500, checkFileContainsStringsFunc(fileContains))
+		command.err = err
+
+		if err != nil && !exists {
+			msg := fmt.Sprintf("file %s does not contains strings: %v",
+				command.containsFile, command.containsStrings)
+			command.err = errors.New(msg)
+		}
+
+	} else {
+		ok, err := checkFileContainsStrings(fileContains)
+		command.err = fileContainsError(fileContains, ok, err)
+	}
+
+	command.containsFile = ""
+
+	return command
+}
+
+// Err returns error
+func (command *ExecCommand) Err() error {
+	err := command.err
+	if err != nil {
+		fmt.Println("command error: ", err.Error())
+	}
+	return err
 }
 
 func readFile(file string) (string, error) {
@@ -135,9 +238,11 @@ func getPropertyWithIndexFromFile(path string, property string, index int) (stri
 func runCommand(execCommad ExecCommand) error {
 
 	log.Printf("[run_command] dir: '%s', command: '%s', args: '%s'\n",
-		execCommad.Directory, execCommad.Command, strings.Join(execCommad.Args, ","))
+		execCommad.directory, execCommad.command, strings.Join(execCommad.args, ","))
 
 	cmd, err := getCmd(execCommad)
+
+	fmt.Println("runCommand err: ", err)
 
 	if err != nil {
 		return err
@@ -149,7 +254,7 @@ func runCommand(execCommad ExecCommand) error {
 func runCommandAsync(execCommad ExecCommand) error {
 
 	log.Printf("[run_command_async] dir: '%s', command: '%s', args: '%s'\n",
-		execCommad.Directory, execCommad.Command, strings.Join(execCommad.Args, ","))
+		execCommad.directory, execCommad.command, strings.Join(execCommad.args, ","))
 
 	cmd, err := getCmd(execCommad)
 
@@ -162,11 +267,11 @@ func runCommandAsync(execCommad ExecCommand) error {
 
 func getCmd(execCommad ExecCommand) (*exec.Cmd, error) {
 
-	cmd := exec.Command(execCommad.Command, execCommad.Args...)
-	cmd.Dir = execCommad.Directory
+	cmd := exec.Command(execCommad.command, execCommad.args...)
+	cmd.Dir = execCommad.directory
 
-	if execCommad.OutputFile != "" {
-		stdOut, err := os.Create(execCommad.OutputFile)
+	if execCommad.outputFile != "" {
+		stdOut, err := os.Create(execCommad.outputFile)
 		if err != nil {
 			return nil, err
 		}
@@ -177,12 +282,12 @@ func getCmd(execCommad ExecCommand) (*exec.Cmd, error) {
 		cmd.Stderr = os.Stderr
 	}
 
-	if len(execCommad.Input) > 0 {
-		cmd.Stdin = strings.NewReader(strings.Join(execCommad.Input, "\n"))
+	if len(execCommad.input) > 0 {
+		cmd.Stdin = strings.NewReader(strings.Join(execCommad.input, "\n"))
 	}
 
 	cmd.Env = os.Environ()
-	env := execCommad.Env
+	env := execCommad.env
 	if env != nil && len(env) > 0 {
 		for _, e := range env {
 			cmd.Env = append(cmd.Env, e)
@@ -290,7 +395,7 @@ func fileContainsError(fileContains checkFileContains, ok bool, e error) (err er
 	}
 
 	if !ok {
-		msg := fmt.Sprintf("File contains error: %+v", fileContains)
+		msg := fmt.Sprintf("File does not contain strings or has errors: %+v", fileContains)
 		err = errors.New(msg)
 		return
 	}

@@ -4,171 +4,92 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"strconv"
-	"strings"
 
 	"github.com/DATA-DOG/godog/gherkin"
 )
 
 const (
-	serviceName = "basic_service_one"
+	configServiceName = "basic_service_one"
 )
 
 func dnnmodelServiceIsRegistered(table *gherkin.DataTable) (err error) {
-	err = serviceIsRegistered(table, dnnModelServicesDir)
-	return
-}
-
-func dnnmodelServiceIsPublishedToNetwork() (err error) {
-	err = serviceIsPublishedToNetwork(dnnModelServicesDir, "./service.json")
-	return
-}
-
-func dnnmodelMpeServiceIsRegistered(table *gherkin.DataTable) (err error) {
 
 	name := getTableValue(table, "name")
 	displayName := getTableValue(table, "display name")
-	group := getTableValue(table, "group")
-	endpoint := getTableValue(table, "endpoint")
+	daemonPort := getTableValue(table, "daemon port")
+	organization := getTableValue(table, "organization name")
 
-	log.Println("dnnModelServicesDir: ", dnnModelServicesDir)
+	metadata := dnnModelServicesDir + "/service_metadata.json"
+	cmd := NewCommand().Dir(dnnModelServicesDir)
 
-	output := dnnModelServicesDir + "/output.txt"
+	cmd.
+		// TBD: convert organizationAddress to use right checksum
+		Run("snet service metadata_init service/service_spec \"%s\" %s --multipartyescrow %s",
+			displayName, "0x3b2b3C2e2E7C93db335E69D827F3CC4bC2A2A2cB", multiPartyEscrow).
+		CheckFileContains(metadata, "display_name", displayName).
+		Run("snet service metadata_set_fixed_price 0.1").
+		CheckFileContains(metadata, "fixed_price", "price_in_cogs", "10000000").
+		Run("snet service metadata_add_endpoints http://localhost:%s", daemonPort).
+		Run("snet service publish %s %s --registry %s -y", organization, name, registryAddress)
 
-	// snet mpe-service publish_proto
-	command := ExecCommand{
-		Command:    "snet",
-		Directory:  dnnModelServicesDir,
-		Args:       []string{"mpe-service", "publish_proto", "service/service_spec/"},
-		OutputFile: output,
-	}
-
-	err = runCommand(command)
-
-	if err != nil {
-		return
-	}
-
-	modelIpfsHash, err := readFile(output)
-	log.Println("modelIpfsHash: ", modelIpfsHash)
-
-	if err != nil {
-		return
-	}
-
-	//snet mpe-service metadata_init
-	command = ExecCommand{
-		Command:   "snet",
-		Directory: dnnModelServicesDir,
-		Args: []string{
-			"mpe-service", "metadata_init",
-			modelIpfsHash, multiPartyEscrow, displayName,
-		},
-	}
-
-	err = runCommand(command)
-
-	if err != nil {
-		return
-	}
-
-	// snet mpe-service metadata_add_group
-	command = ExecCommand{
-		Command:   "snet",
-		Directory: dnnModelServicesDir,
-		Args:      []string{"mpe-service", "metadata_add_group", group, organizationAddress},
-	}
-
-	err = runCommand(command)
-
-	if err != nil {
-		return
-	}
-
-	// snet mpe-service metadata_add_endpoints
-	command = ExecCommand{
-		Command:   "snet",
-		Directory: dnnModelServicesDir,
-		Args:      []string{"mpe-service", "metadata_add_endpoints", group, endpoint},
-	}
-
-	err = runCommand(command)
-
-	if err != nil {
-		return
-	}
-
-	// snet mpe-service  publish_service
-	command = ExecCommand{
-		Command:   "snet",
-		Directory: dnnModelServicesDir,
-		Args:      []string{"mpe-service", "publish_service", registryAddress, name, "Basic_Template", "-y"},
-	}
-
-	err = runCommand(command)
-
-	if err != nil {
-		return
-	}
-
-	return
+	return cmd.Err()
 }
 
 func dnnmodelServiceSnetdaemonConfigFileIsCreated(table *gherkin.DataTable) (err error) {
 
+	serviceName := getTableValue(table, "name")
+	organizationName := getTableValue(table, "organization name")
 	daemonPort := getTableValue(table, "daemon port")
 	price := getTableValue(table, "price")
-	ethereumEndpointPort := getTableValue(table, "ethereum endpoint port")
-	passthroughEndpointPort := getTableValue(table, "passthrough endpoint port")
 
 	snetdConfigTemplate := `
 	{
-		"AGENT_CONTRACT_ADDRESS": "%s",
-		"MULTI_PARTY_ESCROW_CONTRACT_ADDRESS": "%s",
-		"PRIVATE_KEY": "%s",
+		"SERVICE_NAME": "%s",
+		"ORGANIZATION_NAME": "%s",
 		"DAEMON_LISTENING_PORT": %s,
-		"ETHEREUM_JSON_RPC_ENDPOINT": "http://localhost:%s",
+		"DAEMON_END_POINT": "http://localhost:%s",
+		"ETHEREUM_JSON_RPC_ENDPOINT": "http://localhost:8545",
 		"PASSTHROUGH_ENABLED": true,
-		"PASSTHROUGH_ENDPOINT": "http://localhost:%s",
+		"PASSTHROUGH_ENDPOINT": "http://localhost:7003",
+		"IPFS_END_POINT": "http://localhost:5002",
+		"REGISTRY_ADDRESS_KEY": "%s",
+		"PRIVATE_KEY": "1000000000000000000000000000000000000000000000000000000000000000",
 		"price_per_call": %s,
 		"log": {
-			"level": "debug",
-			"output": {
-				"type": "stdout"
-			}
+		  "level": "debug",
+		  "output": {
+			"type": "stdout"
+		  }
 		},
 		"payment_channel_storage_type": "etcd",
 		"payment_channel_storage_client": {
-			"endpoints": ["http://127.0.0.1:2479"]
+		  "endpoints": [
+			"http://127.0.0.1:2479"
+		  ]
 		},
 		"payment_channel_storage_server": {
-			"host" : "127.0.0.1",
-			"client_port": 2479,
-			"peer_port": 2480,
-			"token": "unique-token-dnn",
-			"cluster": "storage-1=http://127.0.0.1:2480",
-			"enabled": "true"
+		  "host": "127.0.0.1",
+		  "client_port": 2479,
+		  "peer_port": 2480,
+		  "token": "unique-token-dnn",
+		  "cluster": "storage-1=http://127.0.0.1:2480",
+		  "enabled": true
 		}
-	}
-	`
-
+	  }`
 	snetdConfig := fmt.Sprintf(
 		snetdConfigTemplate,
-		agentAddress,
-		multiPartyEscrow,
-		accountPrivateKey,
+		serviceName,
+		organizationName,
 		daemonPort,
-		ethereumEndpointPort,
-		passthroughEndpointPort,
+		daemonPort,
+		registryAddress,
 		price,
 	)
 
-	file := fmt.Sprintf("%s/snetd_%s_config.json", dnnModelServicesDir, serviceName)
+	file := fmt.Sprintf("%s/snetd_%s_config.json", dnnModelServicesDir, configServiceName)
 	log.Printf("create snetd config: %s\n---\n:%s\n---\n", file, snetdConfig)
 
-	err = writeToFile(file, snetdConfig)
-
-	return
+	return writeToFile(file, snetdConfig)
 }
 
 func dnnmodelServiceIsRunning() (err error) {
@@ -179,191 +100,36 @@ func dnnmodelServiceIsRunning() (err error) {
 		return
 	}
 
-	command := ExecCommand{
-		Command:   dnnModelServicesDir + "/buildproto.sh",
-		Directory: dnnModelServicesDir,
-	}
+	output := logPath + "/dnn-model-services-" + configServiceName + ".log"
+	cmd := NewCommand().Dir(dnnModelServicesDir)
+	cmd.
+		Run("./buildproto.sh").
+		Output(output).
+		RunAsync("python3 run_basic_service.py --daemon-config-path .").
+		CheckOutput("starting daemon")
 
-	err = runCommand(command)
-
-	if err != nil {
-		return
-	}
-
-	fileContains := checkFileContains{
-		output:  logPath + "/dnn-model-services-" + serviceName + ".log",
-		strings: []string{"multi_party_escrow_contract_address"},
-	}
-
-	command = ExecCommand{
-		Command:    "python3",
-		Directory:  dnnModelServicesDir,
-		Args:       []string{"run_basic_service.py", "--daemon-config-path", "."},
-		OutputFile: fileContains.output,
-	}
-
-	err = runCommandAsync(command)
-
-	if err != nil {
-		return err
-	}
-
-	_, err = checkWithTimeout(5000, 500, checkFileContainsStringsFunc(fileContains))
-
-	return
+	return cmd.Err()
 }
 
-func dnnmodelOpenThePaymentChannel() (err error) {
+func dnnmodelMakeACallUsingPaymentChannel(table *gherkin.DataTable) (err error) {
 
-	command := ExecCommand{
-		Command:   "snet",
-		Directory: dnnModelServicesDir,
-		Args: []string{
-			"contract",
-			"SingularityNetToken", "--at", singnetTokenAddress,
-			"approve", multiPartyEscrow, "1000000",
-			"--transact",
-			"-y",
-		},
-	}
+	name := getTableValue(table, "name")
+	organization := getTableValue(table, "organization name")
+	daemonPort := getTableValue(table, "daemon port")
 
-	err = runCommand(command)
+	cmd := NewCommand().Dir(dnnModelServicesDir)
+	cmd.
+		Run("snet client balance --snt %s --multipartyescrow %s", singnetTokenAddress, multiPartyEscrow).
+		Run("snet client deposit 42000.22 --snt %s --multipartyescrow %s -y", singnetTokenAddress, multiPartyEscrow).
+		Run("snet client open_init_channel_registry %s %s"+
+			" 42 100000000"+
+			" --registry %s"+
+			" --multipartyescrow %s"+
+			" -y",
+			organization, name, registryAddress, multiPartyEscrow).
+		Run("snet client call 0 0.1 localhost:%s add '{\"a\":10,\"b\":32}' --multipartyescrow %s", daemonPort, multiPartyEscrow)
 
-	if err != nil {
-		return
-	}
-
-	command = ExecCommand{
-		Command:   "snet",
-		Directory: dnnModelServicesDir,
-		Args: []string{
-			"contract",
-			"MultiPartyEscrow", "--at", multiPartyEscrow,
-			"deposit", "1000000",
-			"--transact",
-			"-y",
-		},
-	}
-
-	err = runCommand(command)
-
-	if err != nil {
-		return
-	}
-
-	output := dnnModelServicesDir + "/expiration.txt"
-
-	command = ExecCommand{
-		Command:    "snet",
-		Directory:  dnnModelServicesDir,
-		Args:       []string{"mpe-client", "block_number"},
-		OutputFile: output,
-	}
-
-	err = runCommand(command)
-
-	if err != nil {
-		return
-	}
-
-	expirationText, err := readFile(output)
-	if err != nil {
-		return
-	}
-
-	expiration, err := strconv.Atoi(strings.TrimSpace(expirationText))
-
-	if err != nil {
-		return
-	}
-
-	expiration += 12000
-
-	command = ExecCommand{
-		Command:   "snet",
-		Directory: dnnModelServicesDir,
-		Args: []string{
-			"contract",
-			"MultiPartyEscrow", "--at", multiPartyEscrow,
-			"openChannel", organizationAddress,
-			"420000", strconv.Itoa(expiration), "0",
-			"--transact",
-			"-y",
-		},
-	}
-
-	err = runCommand(command)
-
-	return
-}
-
-func dnnmodelCompileProtobuf() (err error) {
-
-	command := ExecCommand{
-		Command:   "snet",
-		Directory: dnnModelServicesDir,
-		Args: []string{
-			"mpe-client",
-			"compile_from_dir",
-			envSingnetRepos + "/dnn-model-services/Services/gRPC/Basic_Template/service/service_spec",
-			"0",
-		},
-	}
-
-	err = runCommand(command)
-
-	return
-}
-
-func dnnmodelMakeACallUsingPaymentChannel() (err error) {
-
-	outputFile := dnnModelServicesDir + "/output.txt"
-
-	fileContains := checkFileContains{
-		output:     outputFile,
-		strings:    []string{organizationAddress, "420000"},
-		ignoreCase: true,
-	}
-
-	command := ExecCommand{
-		Command:   "snet",
-		Directory: dnnModelServicesDir,
-		Args: []string{
-			"mpe-client",
-			"print_my_channels", multiPartyEscrow,
-		},
-		OutputFile: outputFile,
-	}
-
-	err = runCommand(command)
-
-	ok, err := checkFileContainsStrings(fileContains)
-	err = fileContainsError(fileContains, ok, err)
-
-	if err != nil {
-		return
-	}
-
-	for i := 0; i < 3; i++ {
-		command = ExecCommand{
-			Command:   "snet",
-			Directory: dnnModelServicesDir,
-			Args: []string{
-				"mpe-client",
-				"call_server", multiPartyEscrow,
-				"0", "10", "localhost:8090",
-				"--service", "Addition", "add", `{"a":10,"b":32}`,
-			},
-		}
-
-		err = runCommand(command)
-		if err != nil {
-			return
-		}
-
-	}
-
-	return
+	return cmd.Err()
 }
 
 func dnnmodelClaimChannelByTreasurerServer(table *gherkin.DataTable) (err error) {
@@ -374,14 +140,22 @@ func dnnmodelClaimChannelByTreasurerServer(table *gherkin.DataTable) (err error)
 		return
 	}
 
-	ethereumEndpointPort := getTableValue(table, "ethereum endpoint port")
+	serviceName := getTableValue(table, "name")
+	organizationName := getTableValue(table, "organization name")
+	daemonPort := getTableValue(table, "daemon port")
 
 	snetdConfigTemplate := `
 	{
-		"AGENT_CONTRACT_ADDRESS": "%s",
-		"MULTI_PARTY_ESCROW_CONTRACT_ADDRESS": "%s",
+		"SERVICE_NAME": "%s",
+		"ORGANIZATION_NAME": "%s",
+		"DAEMON_LISTENING_PORT": %s,
+		"DAEMON_END_POINT": "http://localhost:%s",
+		"ETHEREUM_JSON_RPC_ENDPOINT": "http://localhost:8545",
+		"PASSTHROUGH_ENABLED": true,
+		"PASSTHROUGH_ENDPOINT": "http://localhost:7003",
+		"IPFS_END_POINT": "http://localhost:5002",
+		"REGISTRY_ADDRESS_KEY": "%s",
 		"PRIVATE_KEY": "%s",
-		"ETHEREUM_JSON_RPC_ENDPOINT": "http://localhost:%s",
 		"log": {
 			"level": "debug",
 			"output": {
@@ -398,10 +172,12 @@ func dnnmodelClaimChannelByTreasurerServer(table *gherkin.DataTable) (err error)
 
 	snetdConfig := fmt.Sprintf(
 		snetdConfigTemplate,
-		agentAddress,
-		multiPartyEscrow,
+		serviceName,
+		organizationName,
+		daemonPort,
+		daemonPort,
+		registryAddress,
 		treasurerPrivateKey,
-		ethereumEndpointPort,
 	)
 
 	log.Println("conf file:\n", snetdConfig)
@@ -413,82 +189,16 @@ func dnnmodelClaimChannelByTreasurerServer(table *gherkin.DataTable) (err error)
 		return
 	}
 
-	output := treasurerServerDir + "/output.txt"
+	cmd := NewCommand().Dir(treasurerServerDir)
+	cmd.
+		Run("snetd list channels").
+		Run("snetd claim --channel-id 0").
+		// TBD: convert address to checksum
+		Run("snet client balance"+
+			" --account 0x3b2b3C2e2E7C93db335E69D827F3CC4bC2A2A2cB"+
+			" --snt %s"+
+			" --multipartyescrow %s",
+			singnetTokenAddress, multiPartyEscrow)
 
-	// snet contract MultiPartyEscrow
-	command := ExecCommand{
-		Command:   "snet",
-		Directory: treasurerServerDir,
-		Args: []string{
-			"contract",
-			"MultiPartyEscrow", "--at", multiPartyEscrow,
-			"channels", "0",
-		},
-		OutputFile: output,
-	}
-
-	err = runCommand(command)
-
-	if err != nil {
-		return
-	}
-
-	fileContains := checkFileContains{
-		output:     output,
-		strings:    []string{snetIdentityAddress, organizationAddress, "420000"},
-		ignoreCase: true,
-	}
-
-	ok, err := checkFileContainsStrings(fileContains)
-	err = fileContainsError(fileContains, ok, err)
-
-	if err != nil {
-		return
-	}
-
-	// snetd claim
-	command = ExecCommand{
-		Command:   "snetd",
-		Directory: treasurerServerDir,
-		Args:      []string{"claim", "--channel-id", "0"},
-	}
-
-	err = runCommand(command)
-
-	if err != nil {
-		return
-	}
-
-	// snet contract MultiPartyEscrow
-	command = ExecCommand{
-		Command:   "snet",
-		Directory: treasurerServerDir,
-		Args: []string{
-			"contract",
-			"MultiPartyEscrow", "--at", multiPartyEscrow,
-			"channels", "0",
-		},
-		OutputFile: output,
-	}
-
-	err = runCommand(command)
-
-	if err != nil {
-		return
-	}
-
-	fileContains = checkFileContains{
-		output:     output,
-		strings:    []string{snetIdentityAddress, organizationAddress, "419970"},
-		ignoreCase: true,
-	}
-
-	ok, err = checkFileContainsStrings(fileContains)
-	err = fileContainsError(fileContains, ok, err)
-
-	if err != nil {
-		return
-	}
-
-	return
+	return cmd.Err()
 }
