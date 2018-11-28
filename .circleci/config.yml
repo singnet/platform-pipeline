@@ -105,6 +105,7 @@ jobs:
           export IPFS_PATH=$GOPATH/ipfs
           mkdir $GOPATH/log
           go get github.com/DATA-DOG/godog/cmd/godog
+          go get github.com/ethereum/go-ethereum/common
           # Disable TensorFlow warnings wich pollute example-service log file
           export TF_CPP_MIN_LOG_LEVEL=2
           godog

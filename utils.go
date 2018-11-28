@@ -242,8 +242,6 @@ func runCommand(execCommad ExecCommand) error {
 
 	cmd, err := getCmd(execCommad)
 
-	fmt.Println("runCommand err: ", err)
-
 	if err != nil {
 		return err
 	}
