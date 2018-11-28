@@ -5,7 +5,7 @@
 SingularityNET Platform CI/CD Pipeline Repository
 
 
-## Run integration tests
+## Run integration tests with CircleCI
 
 * Install [Docker CE](https://docs.docker.com/install/linux/docker-ce/ubuntu)
 * Add $USER to the docker group [Post-installation steps](https://docs.docker.com/install/linux/linux-postinstall)
