@@ -25,7 +25,7 @@ jobs:
           # Install NodeJS toolset
           sudo apt-get -y install nodejs npm
           # install Go tools
-          sudo apt-get -y install golang go-dep golang-goprotobuf-dev golint
+          sudo apt-get -y install golang go-dep golint
           # install IPFS
           wget https://dist.ipfs.io/go-ipfs/v0.4.17/go-ipfs_v0.4.17_linux-amd64.tar.gz
           tar xvfz go-ipfs_*.tar.gz
