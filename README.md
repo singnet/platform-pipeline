@@ -117,7 +117,7 @@ func organizationIsIncludedIntoTheList(table *gherkin.DataTable) error {
 more than one scenario the background tests should be updated to be executed only once.
 
 
-## Troubleshooting troubleshoot failed platform-pipeline project
+## Troubleshoot failed platform-pipeline project
 
 The following steps can help to reproduce and find root cause of the failed platform pipeline build.
 
