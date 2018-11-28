@@ -33,7 +33,9 @@ For example, test organization registering:
 			| organization name |
 			| TestOrganization  |
 ```
+* Go to the platform-pipeline directory
 * Run godog
+  * > godog
 It will print stub methods which needs to be implemented:
 ```go
 
