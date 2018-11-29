@@ -137,8 +137,6 @@ For example, the *bash* command was inserted before running GoDog integration te
           export PATH=$PATH:$GOPATH/bin
           mkdir $GOPATH/log
           go get github.com/DATA-DOG/godog/cmd/godog
-          # Disable TensorFlow warnings wich pollute example-service log file
-          export TF_CPP_MIN_LOG_LEVEL=2
           bash # <-- inserted command
           godog
 ```
@@ -165,3 +163,9 @@ For example, the *bash* command was inserted before running GoDog integration te
     * > docker exec -it container-id bash
 
 `Note`: necessary test environment variables are not set in this *bash* session and should be set manually.
+```
+export GOPATH=/root/singnet
+export SINGNET_REPOS=/root/singnet/src/github.com/singnet
+export PATH=$PATH:$GOPATH/bin
+export IPFS_PATH=$GOPATH/ipfs
+```
