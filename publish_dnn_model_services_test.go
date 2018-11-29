@@ -104,7 +104,7 @@ func dnnmodelServiceIsRunning() (err error) {
 	cmd.
 		Run("./buildproto.sh").
 		Output(output).
-		RunAsync("python3 run_basic_service.py --daemon-config-path .").
+		RunAsync("python3 run_basic_service.py").
 		CheckOutput("starting daemon")
 
 	return cmd.Err()
