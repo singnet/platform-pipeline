@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	configServiceName = "basic_service_one"
+	configServiceName = "snetd.config.json"
 )
 
 func dnnmodelServiceIsRegistered(table *gherkin.DataTable) (err error) {
@@ -85,7 +85,7 @@ func dnnmodelServiceSnetdaemonConfigFileIsCreated(table *gherkin.DataTable) (err
 		price,
 	)
 
-	file := fmt.Sprintf("%s/snetd_%s_config.json", dnnModelServicesDir, configServiceName)
+	file := dnnModelServicesDir + "/" + configServiceName
 	log.Printf("create snetd config: %s\n---\n:%s\n---\n", file, snetdConfig)
 
 	return writeToFile(file, snetdConfig)
@@ -99,7 +99,7 @@ func dnnmodelServiceIsRunning() (err error) {
 		return
 	}
 
-	output := logPath + "/dnn-model-services-" + configServiceName + ".log"
+	output := logPath + "/dnn-model-service.log"
 	cmd := NewCommand().Dir(dnnModelServicesDir)
 	cmd.
 		Run("./buildproto.sh").
