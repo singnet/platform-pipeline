@@ -148,7 +148,7 @@ func dnnmodelClaimChannelByTreasurerServer(table *gherkin.DataTable) (err error)
 		"SERVICE_NAME": "%s",
 		"ORGANIZATION_NAME": "%s",
 		"DAEMON_LISTENING_PORT": %s,
-		"DAEMON_END_POINT": "http://localhost:%s",
+		"DAEMON_END_POINT": "localhost:%s",
 		"ETHEREUM_JSON_RPC_ENDPOINT": "http://localhost:8545",
 		"PASSTHROUGH_ENABLED": true,
 		"PASSTHROUGH_ENDPOINT": "http://localhost:7003",
