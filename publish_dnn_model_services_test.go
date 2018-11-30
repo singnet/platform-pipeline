@@ -28,7 +28,7 @@ func dnnmodelServiceIsRegistered(table *gherkin.DataTable) (err error) {
 		CheckFileContains(metadata, "display_name", displayName).
 		Run("snet service metadata_set_fixed_price 0.1").
 		CheckFileContains(metadata, "fixed_price", "price_in_cogs", "10000000").
-		Run("snet service metadata_add_endpoints http://localhost:%s", daemonPort).
+		Run("snet service metadata_add_endpoints localhost:%s", daemonPort).
 		Run("snet service publish %s %s --registry %s -y", organization, name, registryAddress)
 
 	return cmd.Err()
@@ -46,7 +46,7 @@ func dnnmodelServiceSnetdaemonConfigFileIsCreated(table *gherkin.DataTable) (err
 		"SERVICE_NAME": "%s",
 		"ORGANIZATION_NAME": "%s",
 		"DAEMON_LISTENING_PORT": %s,
-		"DAEMON_END_POINT": "http://localhost:%s",
+		"DAEMON_END_POINT": "localhost:%s",
 		"ETHEREUM_JSON_RPC_ENDPOINT": "http://localhost:8545",
 		"PASSTHROUGH_ENABLED": true,
 		"PASSTHROUGH_ENDPOINT": "http://localhost:7003",
@@ -148,7 +148,7 @@ func dnnmodelClaimChannelByTreasurerServer(table *gherkin.DataTable) (err error)
 		"SERVICE_NAME": "%s",
 		"ORGANIZATION_NAME": "%s",
 		"DAEMON_LISTENING_PORT": %s,
-		"DAEMON_END_POINT": "http://localhost:%s",
+		"DAEMON_END_POINT": "localhost:%s",
 		"ETHEREUM_JSON_RPC_ENDPOINT": "http://localhost:8545",
 		"PASSTHROUGH_ENABLED": true,
 		"PASSTHROUGH_ENDPOINT": "http://localhost:7003",
