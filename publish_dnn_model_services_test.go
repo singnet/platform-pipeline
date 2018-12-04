@@ -23,13 +23,13 @@ func dnnmodelServiceIsRegistered(table *gherkin.DataTable) (err error) {
 	cmd := NewCommand().Dir(dnnModelServicesDir)
 
 	cmd.
-		Run("snet service metadata_init service/service_spec \"%s\" %s --multipartyescrow %s",
-			displayName, organizationAddress, multiPartyEscrow).
+		Run("snet service metadata_init service/service_spec \"%s\" %s",
+			displayName, organizationAddress).
 		CheckFileContains(metadata, "display_name", displayName).
 		Run("snet service metadata_set_fixed_price 0.1").
 		CheckFileContains(metadata, "fixed_price", "price_in_cogs", "10000000").
 		Run("snet service metadata_add_endpoints localhost:%s", daemonPort).
-		Run("snet service publish %s %s --registry %s -y", organization, name, registryAddress)
+		Run("snet service publish %s %s -y", organization, name)
 
 	return cmd.Err()
 }
@@ -39,40 +39,22 @@ func dnnmodelServiceSnetdaemonConfigFileIsCreated(table *gherkin.DataTable) (err
 	serviceName := getTableValue(table, "name")
 	organizationName := getTableValue(table, "organization name")
 	daemonPort := getTableValue(table, "daemon port")
-	price := getTableValue(table, "price")
 
 	snetdConfigTemplate := `
 	{
 		"SERVICE_NAME": "%s",
 		"ORGANIZATION_NAME": "%s",
-		"DAEMON_LISTENING_PORT": %s,
 		"DAEMON_END_POINT": "localhost:%s",
 		"ETHEREUM_JSON_RPC_ENDPOINT": "http://localhost:8545",
 		"PASSTHROUGH_ENABLED": true,
 		"PASSTHROUGH_ENDPOINT": "http://localhost:7003",
 		"IPFS_END_POINT": "http://localhost:5002",
 		"REGISTRY_ADDRESS_KEY": "%s",
-		"PRIVATE_KEY": "1000000000000000000000000000000000000000000000000000000000000000",
-		"price_per_call": %s,
 		"log": {
 		  "level": "debug",
 		  "output": {
 			"type": "stdout"
 		  }
-		},
-		"payment_channel_storage_type": "etcd",
-		"payment_channel_storage_client": {
-		  "endpoints": [
-			"http://127.0.0.1:2479"
-		  ]
-		},
-		"payment_channel_storage_server": {
-		  "host": "127.0.0.1",
-		  "client_port": 2479,
-		  "peer_port": 2480,
-		  "token": "unique-token-dnn",
-		  "cluster": "storage-1=http://127.0.0.1:2480",
-		  "enabled": true
 		}
 	  }`
 	snetdConfig := fmt.Sprintf(
@@ -80,9 +62,7 @@ func dnnmodelServiceSnetdaemonConfigFileIsCreated(table *gherkin.DataTable) (err
 		serviceName,
 		organizationName,
 		daemonPort,
-		daemonPort,
 		registryAddress,
-		price,
 	)
 
 	file := dnnModelServicesDir + "/" + configServiceName
@@ -118,15 +98,10 @@ func dnnmodelMakeACallUsingPaymentChannel(table *gherkin.DataTable) (err error) 
 
 	cmd := NewCommand().Dir(dnnModelServicesDir)
 	cmd.
-		Run("snet client balance --snt %s --multipartyescrow %s", singnetTokenAddress, multiPartyEscrow).
-		Run("snet client deposit 42000.22 --snt %s --multipartyescrow %s -y", singnetTokenAddress, multiPartyEscrow).
-		Run("snet client open_init_channel_registry %s %s"+
-			" 42 100000000"+
-			" --registry %s"+
-			" --multipartyescrow %s"+
-			" -y",
-			organization, name, registryAddress, multiPartyEscrow).
-		Run("snet client call 0 0.1 localhost:%s add '{\"a\":10,\"b\":32}' --multipartyescrow %s", daemonPort, multiPartyEscrow)
+		Run("snet client balance").
+		Run("snet client deposit 42000.22 -y").
+		Run("snet client open_init_channel_registry %s %s 42 100000000 -y", organization, name).
+		Run("snet client call 0 0.1 localhost:%s add '{\"a\":10,\"b\":32}'", daemonPort)
 
 	return cmd.Err()
 }
@@ -147,7 +122,6 @@ func dnnmodelClaimChannelByTreasurerServer(table *gherkin.DataTable) (err error)
 	{
 		"SERVICE_NAME": "%s",
 		"ORGANIZATION_NAME": "%s",
-		"DAEMON_LISTENING_PORT": %s,
 		"DAEMON_END_POINT": "localhost:%s",
 		"ETHEREUM_JSON_RPC_ENDPOINT": "http://localhost:8545",
 		"PASSTHROUGH_ENABLED": true,
@@ -160,12 +134,6 @@ func dnnmodelClaimChannelByTreasurerServer(table *gherkin.DataTable) (err error)
 			"output": {
 				"type": "stdout"
 			}
-		},
-		"payment_channel_storage_type": "etcd",
-		"payment_channel_storage_client": {
-			"connection_timeout": "5s",
-			"request_timeout": "3s",
-			"endpoints": ["http://127.0.0.1:2479"]
 		}
 	}`
 
@@ -173,7 +141,6 @@ func dnnmodelClaimChannelByTreasurerServer(table *gherkin.DataTable) (err error)
 		snetdConfigTemplate,
 		serviceName,
 		organizationName,
-		daemonPort,
 		daemonPort,
 		registryAddress,
 		treasurerPrivateKey,
