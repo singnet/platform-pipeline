@@ -167,60 +167,28 @@ func ipfsIsRunning(portAPI int, portGateway int) (err error) {
 	return
 }
 
-func identityIsCreatedWithUser(user string) (err error) {
-
-	err = NewCommand().
-		Run("snet identity create %s key --private-key %s", user, identiyPrivateKey).
-		Run("snet identity snet-user").
-		Err()
-
-	return
-
-}
-
-func snetIsConfiguredWithEthereumRPCEndpoint(endpointEthereumRPC int) (err error) {
-
-	config := `
-[network.local]
-default_eth_rpc_endpoint = http://localhost:` + toString(endpointEthereumRPC)
-
-	err = appendToFile(snetConfigFile, config)
-
-	if err != nil {
-		return
-	}
-
-	err = NewCommand().
-		Run("snet network local").
-		CheckFileContains(snetConfigFile, "session").
-		Err()
-
+func snetIsConfiguredLocalRpc(table *gherkin.DataTable) (err error) {
+    rpc_port  := getTableValue(table, "Ethereum RPC port")
+    user_name := getTableValue(table, "user name")
+    ipfs_port := getTableValue(table, "IPFS port")
+    err = NewCommand().
+          Run("snet network create local http://localhost:%s", rpc_port).
+          Run("snet identity create %s rpc --network local", user_name).
+          Run("snet set default_ipfs_endpoint http://localhost:%s", ipfs_port).
+          Run("snet set current_singularitynettoken_at " + singnetTokenAddress).
+          Run("snet set current_registry_at "            + registryAddress).
+          Run("snet set current_multipartyescrow_at "    + multiPartyEscrow).
+          Err()
 	return
 }
 
-func snetIsConfiguredWithIPFSEndpoint(endpointIPFS int) (err error) {
-
-	err = NewCommand().
-		Run("sed -ie '/ipfs/,+2d' %s", snetConfigFile).
-		Err()
-
-	if err != nil {
-		return
-	}
-
-	config := `
-[ipfs]
-default_ipfs_endpoint = http://localhost:` + toString(endpointIPFS)
-
-	return appendToFile(snetConfigFile, config)
-}
 
 func organizationIsAdded(table *gherkin.DataTable) (err error) {
 
 	organization := getTableValue(table, "organization")
 
 	return NewCommand().
-		Run("snet organization create %s --registry-at %s -y", organization, registryAddress).
+		Run("snet organization create %s -y", organization).
 		Err()
 }
 
