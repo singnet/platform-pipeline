@@ -39,39 +39,22 @@ func dnnmodelServiceSnetdaemonConfigFileIsCreated(table *gherkin.DataTable) (err
 	serviceName := getTableValue(table, "name")
 	organizationName := getTableValue(table, "organization name")
 	daemonPort := getTableValue(table, "daemon port")
-	price := getTableValue(table, "price")
 
 	snetdConfigTemplate := `
 	{
 		"SERVICE_NAME": "%s",
 		"ORGANIZATION_NAME": "%s",
-		"DAEMON_LISTENING_PORT": %s,
 		"DAEMON_END_POINT": "localhost:%s",
 		"ETHEREUM_JSON_RPC_ENDPOINT": "http://localhost:8545",
 		"PASSTHROUGH_ENABLED": true,
 		"PASSTHROUGH_ENDPOINT": "http://localhost:7003",
 		"IPFS_END_POINT": "http://localhost:5002",
 		"REGISTRY_ADDRESS_KEY": "%s",
-		"price_per_call": %s,
 		"log": {
 		  "level": "debug",
 		  "output": {
 			"type": "stdout"
 		  }
-		},
-		"payment_channel_storage_type": "etcd",
-		"payment_channel_storage_client": {
-		  "endpoints": [
-			"http://127.0.0.1:2479"
-		  ]
-		},
-		"payment_channel_storage_server": {
-		  "host": "127.0.0.1",
-		  "client_port": 2479,
-		  "peer_port": 2480,
-		  "token": "unique-token-dnn",
-		  "cluster": "storage-1=http://127.0.0.1:2480",
-		  "enabled": true
 		}
 	  }`
 	snetdConfig := fmt.Sprintf(
@@ -79,9 +62,7 @@ func dnnmodelServiceSnetdaemonConfigFileIsCreated(table *gherkin.DataTable) (err
 		serviceName,
 		organizationName,
 		daemonPort,
-		daemonPort,
 		registryAddress,
-		price,
 	)
 
 	file := dnnModelServicesDir + "/" + configServiceName
@@ -141,7 +122,6 @@ func dnnmodelClaimChannelByTreasurerServer(table *gherkin.DataTable) (err error)
 	{
 		"SERVICE_NAME": "%s",
 		"ORGANIZATION_NAME": "%s",
-		"DAEMON_LISTENING_PORT": %s,
 		"DAEMON_END_POINT": "localhost:%s",
 		"ETHEREUM_JSON_RPC_ENDPOINT": "http://localhost:8545",
 		"PASSTHROUGH_ENABLED": true,
@@ -154,12 +134,6 @@ func dnnmodelClaimChannelByTreasurerServer(table *gherkin.DataTable) (err error)
 			"output": {
 				"type": "stdout"
 			}
-		},
-		"payment_channel_storage_type": "etcd",
-		"payment_channel_storage_client": {
-			"connection_timeout": "5s",
-			"request_timeout": "3s",
-			"endpoints": ["http://127.0.0.1:2479"]
 		}
 	}`
 
@@ -167,7 +141,6 @@ func dnnmodelClaimChannelByTreasurerServer(table *gherkin.DataTable) (err error)
 		snetdConfigTemplate,
 		serviceName,
 		organizationName,
-		daemonPort,
 		daemonPort,
 		registryAddress,
 		treasurerPrivateKey,

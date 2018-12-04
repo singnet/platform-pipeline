@@ -10,7 +10,7 @@ func FeatureContext(s *godog.Suite) {
 	s.Step(`^Ethereum network is running on port (\d+)$`, ethereumNetworkIsRunningOnPort)
 	s.Step(`^Contracts are deployed using Truffle$`, contractsAreDeployedUsingTruffle)
 	s.Step(`^IPFS is running with API port (\d+) and Gateway port (\d+)$`, ipfsIsRunning)
-    s.Step(`^snet is configured local rpc$`, snetIsConfiguredLocalRpc)
+	s.Step(`^snet is configured local rpc$`, snetIsConfiguredLocalRpc)
 	s.Step(`^Organization is added:$`, organizationIsAdded)
 
 	// dnn-model-services sample
