@@ -10,7 +10,6 @@ import (
 
 var platformContractsDir string
 var exampleServiceDir string
-var dnnModelServicesDir string
 var treasurerServerDir string
 var snetConfigFile string
 
@@ -28,8 +27,7 @@ var organizationAddress string
 func init() {
 	platformContractsDir = envSingnetRepos + "/platform-contracts"
 	exampleServiceDir = envSingnetRepos + "/example-service"
-	dnnModelServicesDir = envSingnetRepos + "/dnn-model-services/Services/gRPC/Basic_Template"
-	treasurerServerDir = envSingnetRepos + "/treasurer"
+    treasurerServerDir = envSingnetRepos + "/treasurer"
 	snetConfigFile = envHome + "/.snet/config"
 }
 
@@ -188,7 +186,7 @@ func organizationIsAdded(table *gherkin.DataTable) (err error) {
 	organization := getTableValue(table, "organization")
 
 	return NewCommand().
-		Run("snet organization create %s -y", organization).
+		Run("snet organization create %s -y --org-id %s", organization, organization).
 		Err()
 }
 

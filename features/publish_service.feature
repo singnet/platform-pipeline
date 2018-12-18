@@ -11,17 +11,17 @@ Feature: Publish example service
             | organization        |
             | ExampleOrganization |
 
-    Scenario: Publish dnn-model-services
-        When  dnn-model service is registered
+    Scenario: Publish example-service-services
+        When  example-service service is registered
             | name            | display name      | organization name   | daemon port |
-            | DNNModelService | DNN Model Service | ExampleOrganization | 8090        |
-        When  dnn-model service snet-daemon config file is created
+            | ExampleService  | Example Service | ExampleOrganization | 8090        |
+        When  example-service service snet-daemon config file is created
             | name            | organization name   | daemon port | price |
-            | DNNModelService | ExampleOrganization | 8090        | 10    |
-        When dnn-model service is running
-        Then dnn-model make a call using payment channel
+            | ExampleService  | ExampleOrganization | 8090        | 10    |
+        When example-service service is running
+        Then example-service make a call using payment channel
             | name            | organization name   | daemon port |
-            | DNNModelService | ExampleOrganization | 8090        |
-        Then dnn-model claim channel by treasurer server
+            | ExampleService  | ExampleOrganization | 8090        |
+        Then example-service claim channel by treasurer server
             | name            | organization name   | daemon port |
-            | DNNModelService | ExampleOrganization | 8090        |
+            | ExampleService  | ExampleOrganization | 8090        |

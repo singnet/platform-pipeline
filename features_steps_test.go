@@ -13,10 +13,10 @@ func FeatureContext(s *godog.Suite) {
 	s.Step(`^snet is configured local rpc$`, snetIsConfiguredLocalRpc)
 	s.Step(`^Organization is added:$`, organizationIsAdded)
 
-	// dnn-model-services sample
-	s.Step(`^dnn-model service is registered$`, dnnmodelServiceIsRegistered)
-	s.Step(`^dnn-model service snet-daemon config file is created$`, dnnmodelServiceSnetdaemonConfigFileIsCreated)
-	s.Step(`^dnn-model service is running$`, dnnmodelServiceIsRunning)
-	s.Step(`^dnn-model make a call using payment channel$`, dnnmodelMakeACallUsingPaymentChannel)
-	s.Step(`^dnn-model claim channel by treasurer server$`, dnnmodelClaimChannelByTreasurerServer)
+	// example-service-services sample
+	s.Step(`^example-service service is registered$`, exampleserviceServiceIsRegistered)
+	s.Step(`^example-service service snet-daemon config file is created$`, exampleserviceServiceSnetdaemonConfigFileIsCreated)
+	s.Step(`^example-service service is running$`, exampleserviceServiceIsRunning)
+	s.Step(`^example-service make a call using payment channel$`, exampleserviceMakeACallUsingPaymentChannel)
+	s.Step(`^example-service claim channel by treasurer server$`, exampleserviceClaimChannelByTreasurerServer)
 }

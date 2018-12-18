@@ -12,29 +12,29 @@ const (
 	configServiceName = "snetd.config.json"
 )
 
-func dnnmodelServiceIsRegistered(table *gherkin.DataTable) (err error) {
+func exampleserviceServiceIsRegistered(table *gherkin.DataTable) (err error) {
 
 	name := getTableValue(table, "name")
 	displayName := getTableValue(table, "display name")
 	daemonPort := getTableValue(table, "daemon port")
 	organization := getTableValue(table, "organization name")
 
-	metadata := dnnModelServicesDir + "/service_metadata.json"
-	cmd := NewCommand().Dir(dnnModelServicesDir)
+	metadata := exampleServiceDir + "/service_metadata.json"
+	cmd := NewCommand().Dir(exampleServiceDir)
 
 	cmd.
-		Run("snet service metadata_init service/service_spec \"%s\" %s",
+		Run("snet service metadata-init service/service_spec \"%s\" %s",
 			displayName, organizationAddress).
 		CheckFileContains(metadata, "display_name", displayName).
-		Run("snet service metadata_set_fixed_price 0.1").
+		Run("snet service metadata-set-fixed-price 0.1").
 		CheckFileContains(metadata, "fixed_price", "price_in_cogs", "10000000").
-		Run("snet service metadata_add_endpoints localhost:%s", daemonPort).
+		Run("snet service metadata-add-endpoints localhost:%s", daemonPort).
 		Run("snet service publish %s %s -y", organization, name)
 
 	return cmd.Err()
 }
 
-func dnnmodelServiceSnetdaemonConfigFileIsCreated(table *gherkin.DataTable) (err error) {
+func exampleserviceServiceSnetdaemonConfigFileIsCreated(table *gherkin.DataTable) (err error) {
 
 	serviceName := getTableValue(table, "name")
 	organizationName := getTableValue(table, "organization name")
@@ -42,8 +42,8 @@ func dnnmodelServiceSnetdaemonConfigFileIsCreated(table *gherkin.DataTable) (err
 
 	snetdConfigTemplate := `
 	{
-		"SERVICE_NAME": "%s",
-		"ORGANIZATION_NAME": "%s",
+		"SERVICE_ID": "%s",
+		"ORGANIZATION_ID": "%s",
 		"DAEMON_END_POINT": "localhost:%s",
 		"ETHEREUM_JSON_RPC_ENDPOINT": "http://localhost:8545",
 		"PASSTHROUGH_ENABLED": true,
@@ -65,48 +65,48 @@ func dnnmodelServiceSnetdaemonConfigFileIsCreated(table *gherkin.DataTable) (err
 		registryAddress,
 	)
 
-	file := dnnModelServicesDir + "/" + configServiceName
+	file := exampleServiceDir + "/" + configServiceName
 	log.Printf("create snetd config: %s\n---\n:%s\n---\n", file, snetdConfig)
 
 	return writeToFile(file, snetdConfig)
 }
 
-func dnnmodelServiceIsRunning() (err error) {
+func exampleserviceServiceIsRunning() (err error) {
 
-	err = os.Chmod(dnnModelServicesDir+"/buildproto.sh", 0544)
+	err = os.Chmod(exampleServiceDir+"/buildproto.sh", 0544)
 
 	if err != nil {
 		return
 	}
 
-	output := logPath + "/dnn-model-service.log"
-	cmd := NewCommand().Dir(dnnModelServicesDir)
+	output := logPath + "/example-service.log"
+	cmd := NewCommand().Dir(exampleServiceDir)
 	cmd.
 		Run("./buildproto.sh").
 		Output(output).
-		RunAsync("python3 run_basic_service.py").
+		RunAsync("python3 run_example_service.py").
 		CheckOutput("starting daemon")
 
 	return cmd.Err()
 }
 
-func dnnmodelMakeACallUsingPaymentChannel(table *gherkin.DataTable) (err error) {
+func exampleserviceMakeACallUsingPaymentChannel(table *gherkin.DataTable) (err error) {
 
 	name := getTableValue(table, "name")
 	organization := getTableValue(table, "organization name")
 	daemonPort := getTableValue(table, "daemon port")
 
-	cmd := NewCommand().Dir(dnnModelServicesDir)
+	cmd := NewCommand().Dir(exampleServiceDir)
 	cmd.
-		Run("snet client balance").
-		Run("snet client deposit 42000.22 -y").
-		Run("snet client open_init_channel_registry %s %s 42 100000000 -y", organization, name).
+		Run("snet account balance").
+		Run("snet account deposit 42000.22 -y").
+		Run("snet channel open-init %s %s 42 100000000 -y", organization, name).
 		Run("snet client call 0 0.1 localhost:%s add '{\"a\":10,\"b\":32}'", daemonPort)
 
 	return cmd.Err()
 }
 
-func dnnmodelClaimChannelByTreasurerServer(table *gherkin.DataTable) (err error) {
+func exampleserviceClaimChannelByTreasurerServer(table *gherkin.DataTable) (err error) {
 
 	err = os.Mkdir(treasurerServerDir, 0700)
 
@@ -120,8 +120,8 @@ func dnnmodelClaimChannelByTreasurerServer(table *gherkin.DataTable) (err error)
 
 	snetdConfigTemplate := `
 	{
-		"SERVICE_NAME": "%s",
-		"ORGANIZATION_NAME": "%s",
+		"SERVICE_ID": "%s",
+		"ORGANIZATION_ID": "%s",
 		"DAEMON_END_POINT": "localhost:%s",
 		"ETHEREUM_JSON_RPC_ENDPOINT": "http://localhost:8545",
 		"PASSTHROUGH_ENABLED": true,
@@ -159,7 +159,7 @@ func dnnmodelClaimChannelByTreasurerServer(table *gherkin.DataTable) (err error)
 	cmd.
 		Run("snetd list channels").
 		Run("snetd claim --channel-id 0").
-		Run("snet client balance"+
+		Run("snet account balance"+
 			" --account %s"+
 			" --snt %s"+
 			" --multipartyescrow %s",

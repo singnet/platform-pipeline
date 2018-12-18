@@ -61,7 +61,7 @@ func FeatureContext(s *godog.Suite) {
 	// background
 	// ...
 
-	// dnn-model-services sample
+	// example-services sample
 	// ...
 
 	// Check organization
