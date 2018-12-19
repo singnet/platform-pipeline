@@ -84,11 +84,11 @@ jobs:
           ./scripts/build linux amd64
           ln -s $SINGNET_REPOS/snet-daemon/build/snetd-linux-amd64 /usr/local/bin/snetd
     - run:
-        name: Build dnn-model-services
+        name: Build example_service
         command: |
           export PATH=$PATH:$GOPATH/bin
           cd $SINGNET_REPOS
-          git clone https://github.com/singnet/dnn-model-services.git
+          git clone https://github.com/singnet/example-service.git
     - checkout
     - run:
         name: Run integration tests
