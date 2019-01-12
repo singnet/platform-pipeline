@@ -108,62 +108,9 @@ func exampleserviceMakeACallUsingPaymentChannel(table *gherkin.DataTable) (err e
 
 func exampleserviceClaimChannelByTreasurerServer(table *gherkin.DataTable) (err error) {
 
-	err = os.Mkdir(treasurerServerDir, 0700)
-
-	if err != nil {
-		return
-	}
-
-	serviceName := getTableValue(table, "name")
-	organizationName := getTableValue(table, "organization name")
-	daemonPort := getTableValue(table, "daemon port")
-
-	snetdConfigTemplate := `
-	{
-		"SERVICE_ID": "%s",
-		"ORGANIZATION_ID": "%s",
-		"DAEMON_END_POINT": "localhost:%s",
-		"ETHEREUM_JSON_RPC_ENDPOINT": "http://localhost:8545",
-		"PASSTHROUGH_ENABLED": true,
-		"PASSTHROUGH_ENDPOINT": "http://localhost:7003",
-		"IPFS_END_POINT": "http://localhost:5002",
-		"REGISTRY_ADDRESS_KEY": "%s",
-		"PRIVATE_KEY": "%s",
-		"log": {
-			"level": "debug",
-			"output": {
-				"type": "stdout"
-			}
-		}
-	}`
-
-	snetdConfig := fmt.Sprintf(
-		snetdConfigTemplate,
-		serviceName,
-		organizationName,
-		daemonPort,
-		registryAddress,
-		treasurerPrivateKey,
-	)
-
-	log.Println("conf file:\n", snetdConfig)
-
-	file := treasurerServerDir + "/snetd.config.json"
-	err = writeToFile(file, snetdConfig)
-
-	if err != nil {
-		return
-	}
-
-	cmd := NewCommand().Dir(treasurerServerDir)
-	cmd.
-		Run("snetd list channels").
-		Run("snetd claim --channel-id 0").
-		Run("snet account balance"+
-			" --account %s"+
-			" --snt %s"+
-			" --multipartyescrow %s",
-			organizationAddress, singnetTokenAddress, multiPartyEscrow)
-
+    daemonPort := getTableValue(table, "daemon port")
+	cmd := NewCommand().Dir(exampleServiceDir)
+	cmd.Run("snet treasurer print-unclaimed --endpoint localhost:%s --wallet-index 1", daemonPort).
+		Run("snet treasurer claim-all --endpoint localhost:%s  --wallet-index 1 -y", daemonPort)
 	return cmd.Err()
 }
