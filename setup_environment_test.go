@@ -1,7 +1,7 @@
 package main
 
 import (
-	"errors"
+
 	"log"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -12,10 +12,6 @@ var platformContractsDir string
 var exampleServiceDir string
 var treasurerServerDir string
 var snetConfigFile string
-
-var treasurerPrivateKey string
-var accountPrivateKey string
-var identiyPrivateKey string
 
 var snetIdentityAddress string
 
@@ -68,38 +64,6 @@ func initAddresses(output string) (err error) {
 		return
 	}
 	organizationAddress = toChecksumAddress(organizationAddress)
-
-	treasurerPrivateKey, err = getPrivateKey("1", output)
-	if err != nil {
-		return
-	}
-
-	accountPrivateKey, err = getPrivateKey("2", output)
-	if err != nil {
-		return
-	}
-
-	identiyPrivateKey, err = getPropertyWithIndexFromFile(output, "(0)", 1)
-	if err != nil {
-		return
-	}
-
-	return
-}
-
-func getPrivateKey(index string, file string) (key string, err error) {
-
-	key, err = getPropertyWithIndexFromFile(file, "("+index+")", 1)
-	if err != nil {
-		return
-	}
-
-	if len(key) < 3 {
-		err = errors.New("Len of account privite key is to small: " + key)
-		return
-	}
-
-	key = key[2:]
 
 	return
 }

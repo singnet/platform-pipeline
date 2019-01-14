@@ -23,5 +23,11 @@ Feature: Publish example service
             | name            | organization name   | daemon port |
             | ExampleService  | ExampleOrganization | 8090        |
         Then example-service claim channel by treasurer server
+            | daemon port |
+            | 8090        |
+        Then example-service make a call using payment channel
             | name            | organization name   | daemon port |
             | ExampleService  | ExampleOrganization | 8090        |
+        Then example-service claim channel by treasurer server
+            | daemon port |
+            | 8090        |
