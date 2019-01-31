@@ -44,7 +44,7 @@ func exampleserviceServiceSnetdaemonConfigFileIsCreated(table *gherkin.DataTable
 	{
 		"SERVICE_ID": "%s",
 		"ORGANIZATION_ID": "%s",
-        "DAEMON_END_POINT": "http://localhost:%s",
+        "DAEMON_END_POINT": "localhost:%s",
 		"ETHEREUM_JSON_RPC_ENDPOINT": "http://localhost:8545",
 		"PASSTHROUGH_ENABLED": true,
 		"PASSTHROUGH_ENDPOINT": "http://localhost:7003",
