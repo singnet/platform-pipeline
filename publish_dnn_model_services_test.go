@@ -100,7 +100,7 @@ func exampleserviceMakeACallUsingPaymentChannel(table *gherkin.DataTable) (err e
 		Run("snet account balance").
 		Run("snet account deposit 42000.22 -y").
 		Run("snet channel open-init %s %s 42 +30days -y", organization, name).
-		Run("snet client call %s %s add '{\"a\":10,\"b\":32}'", organization, name)
+		Run("snet client call %s %s add '{\"a\":10,\"b\":32}' -y", organization, name)
 
 	return cmd.Err()
 }
