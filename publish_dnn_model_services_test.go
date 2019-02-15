@@ -94,14 +94,13 @@ func exampleserviceMakeACallUsingPaymentChannel(table *gherkin.DataTable) (err e
 
 	name := getTableValue(table, "name")
 	organization := getTableValue(table, "organization name")
-	daemonPort := getTableValue(table, "daemon port")
 
 	cmd := NewCommand().Dir(exampleServiceDir)
 	cmd.
 		Run("snet account balance").
 		Run("snet account deposit 42000.22 -y").
 		Run("snet channel open-init %s %s 42 +30days -y", organization, name).
-		Run("snet client call 0 0.1 localhost:%s add '{\"a\":10,\"b\":32}'", daemonPort)
+		Run("snet client call %s %s add '{\"a\":10,\"b\":32}'", organization, name)
 
 	return cmd.Err()
 }
