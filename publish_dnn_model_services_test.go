@@ -80,11 +80,12 @@ func exampleserviceServiceIsRunning() (err error) {
 	}
 
 	output := logPath + "/example-service.log"
+	exampleRunCmd := "python3 run_example_service.py --daemon-config " +  exampleServiceDir + "/" + configServiceName
 	cmd := NewCommand().Dir(exampleServiceDir)
 	cmd.
 		Run("./buildproto.sh").
 		Output(output).
-		RunAsync("python3 run_example_service.py").
+		RunAsync(exampleRunCmd).
 		CheckOutput("starting daemon")
 
 	return cmd.Err()
