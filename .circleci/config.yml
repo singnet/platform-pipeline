@@ -81,7 +81,7 @@ jobs:
           npm install $SINGNET_REPOS/platform-contracts/build/npm-module
           popd
           ./scripts/install
-          ./scripts/build linux amd64 `git describe --tag`
+          ./scripts/build-xgo `git describe --tag`
           ln -s $SINGNET_REPOS/snet-daemon/build/snetd-linux-amd64 /usr/local/bin/snetd
     - run:
         name: Build example_service
