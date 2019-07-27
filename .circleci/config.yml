@@ -49,7 +49,7 @@ jobs:
         name: Build platform-contracts
         command: |
           cd $SINGNET_REPOS
-          git clone https://github.com/singnet/platform-contracts.git
+          git clone --branch v0.3.0 https://github.com/singnet/platform-contracts
           cd platform-contracts
           npm install ganache-cli
           # install token-contracts from local dir
@@ -75,7 +75,7 @@ jobs:
         command: |
           export PATH=$PATH:$GOPATH/bin
           cd $SINGNET_REPOS
-          git clone https://github.com/singnet/snet-daemon.git
+          git clone --branch v1.0.0 https://github.com/singnet/snet-daemon.git
           cd snet-daemon
           # install token-contracts and platform-contracts from local dir
           pushd resources/blockchain
