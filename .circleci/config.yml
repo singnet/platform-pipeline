@@ -32,6 +32,8 @@ jobs:
           cp ./go-ipfs/ipfs /usr/local/bin
           # Installl Python
           sudo apt-get -y install python3 python3-pip
+          python3 -m pip install --upgrade pip
+          pip3 install --upgrade setuptools
           # Install other
           sudo apt-get -y install libudev-dev libusb-1.0-0-dev
     - run:
@@ -66,8 +68,8 @@ jobs:
           npm install $SINGNET_REPOS/token-contracts/build/npm-module
           npm install $SINGNET_REPOS/platform-contracts/build/npm-module
           popd
-          ./scripts/blockchain install
-          pip3 install -e .
+          ./packages/snet_cli/scripts/blockchain install
+          pip3 install -e ./packages/snet_cli
     - run:
         name: Build snet-daemon
         command: |
