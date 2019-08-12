@@ -23,8 +23,8 @@ func exampleserviceServiceIsRegistered(table *gherkin.DataTable) (err error) {
 	metadata := exampleServiceDir + "/service_metadata.json"
 	cmd := NewCommand().Dir(exampleServiceDir)
 	cmd.
-		Run("snet service metadata-init service/service_spec \"%s\" --encoding proto --service-type grpc %s --group-name %s ",
-			displayName, organizationAddress, groupname).
+		Run("snet service metadata-init service/service_spec \"%s\" --encoding proto --service-type grpc --group-name %s ",
+			displayName, groupname).
 		CheckFileContains(metadata, "display_name", displayName).
 		CheckFileContains(metadata, "group_name", "default_group").
 		Run("snet service metadata-set-fixed-price %s 0.1", groupname).
