@@ -8,8 +8,8 @@ Feature: Publish example service
             | Ethereum RPC port | user name   | IPFS port |
             | 8545              | "snet-user" | 5002      |
         Given Organization is added:
-            | organization        |etcd endpoint|group name|payment address|
-            | ExampleOrganization |http://127.0.0.1:2379|default_group|0x3b2b3C2e2E7C93db335E69D827F3CC4bC2A2A2cB|
+            | organization        |etcd endpoint|group name|
+            | ExampleOrganization |http://127.0.0.1:2379|default_group|
 
     Scenario: Publish example-service-services
         When  example-service service is registered
