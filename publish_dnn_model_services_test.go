@@ -18,17 +18,18 @@ func exampleserviceServiceIsRegistered(table *gherkin.DataTable) (err error) {
 	displayName := getTableValue(table, "display name")
 	daemonPort := getTableValue(table, "daemon port")
 	organization := getTableValue(table, "organization name")
+	groupname := getTableValue(table, "group name")
 
 	metadata := exampleServiceDir + "/service_metadata.json"
 	cmd := NewCommand().Dir(exampleServiceDir)
-
 	cmd.
-		Run("snet service metadata-init service/service_spec \"%s\" %s",
-			displayName, organizationAddress).
+		Run("snet service metadata-init service/service_spec \"%s\" --encoding proto --service-type grpc --group-name %s ",
+			displayName, groupname).
 		CheckFileContains(metadata, "display_name", displayName).
-		Run("snet service metadata-set-fixed-price 0.1").
+		CheckFileContains(metadata, "group_name", "default_group").
+		Run("snet service metadata-set-fixed-price %s 0.1", groupname).
 		CheckFileContains(metadata, "fixed_price", "price_in_cogs", "10000000").
-		Run("snet service metadata-add-endpoints localhost:%s", daemonPort).
+		Run("snet service metadata-add-endpoints default_group localhost:%s", daemonPort).
 		Run("snet service publish %s %s -y", organization, name)
 
 	return cmd.Err()
@@ -42,6 +43,9 @@ func exampleserviceServiceSnetdaemonConfigFileIsCreated(table *gherkin.DataTable
 
 	snetdConfigTemplate := `
 	{
+        "payment_channel_storage_server": {
+		"enabled": true
+        },
 		"SERVICE_ID": "%s",
 		"ORGANIZATION_ID": "%s",
         "DAEMON_END_POINT": "localhost:%s",
@@ -56,6 +60,7 @@ func exampleserviceServiceSnetdaemonConfigFileIsCreated(table *gherkin.DataTable
 			"type": "stdout"
 		  }
 		}
+        
 	  }`
 	snetdConfig := fmt.Sprintf(
 		snetdConfigTemplate,
@@ -80,35 +85,36 @@ func exampleserviceServiceIsRunning() (err error) {
 	}
 
 	output := logPath + "/example-service.log"
-	exampleRunCmd := "python3 run_example_service.py --daemon-config " +  exampleServiceDir + "/" + configServiceName
+	exampleRunCmd := "python3 run_example_service.py --daemon-config " + exampleServiceDir + "/" + configServiceName
 	cmd := NewCommand().Dir(exampleServiceDir)
 	cmd.
 		Run("./buildproto.sh").
 		Output(output).
-		RunAsync(exampleRunCmd).
-		CheckOutput("starting daemon")
+		RunAsync(exampleRunCmd)
+		//CheckOutput("starting daemon")
 
 	return cmd.Err()
 }
 
 func exampleserviceMakeACallUsingPaymentChannel(table *gherkin.DataTable) (err error) {
 
-	name := getTableValue(table, "name")
+	group_name := getTableValue(table, "group name")
 	organization := getTableValue(table, "organization name")
+	service := getTableValue(table, "service name")
 
 	cmd := NewCommand().Dir(exampleServiceDir)
 	cmd.
 		Run("snet account balance").
 		Run("snet account deposit 42000.22 -y").
-		Run("snet channel open-init %s %s 42 +30days -y", organization, name).
-		Run("snet client call %s %s add '{\"a\":10,\"b\":32}' -y", organization, name)
+		Run("snet channel open-init %s %s 42 +30days -y", organization, group_name).
+		Run("snet --print-traceback client call %s %s %s add '{\"a\":10,\"b\":32}' -y", organization, service, group_name)
 
 	return cmd.Err()
 }
 
 func exampleserviceClaimChannelByTreasurerServer(table *gherkin.DataTable) (err error) {
 
-    daemonPort := getTableValue(table, "daemon port")
+	daemonPort := getTableValue(table, "daemon port")
 	cmd := NewCommand().Dir(exampleServiceDir)
 	cmd.Run("snet treasurer print-unclaimed --endpoint localhost:%s --wallet-index 1", daemonPort).
 		Run("snet treasurer claim-all --endpoint localhost:%s  --wallet-index 1 -y", daemonPort)
