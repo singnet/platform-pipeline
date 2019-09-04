@@ -29,6 +29,7 @@ func ethereumNetworkIsRunningOnPort(port int) (err error) {
 
 	output := logPath + "/ganache.log"
 	NewCommand().Run("killall node || echo \"supress an error\"")
+	NewCommand().Run("killall etcd || echo \"supress an error\"")
 	err = NewCommand().Dir(platformContractsDir).
 		Output(output).
 		RunAsync("./node_modules/.bin/ganache-cli --deterministic --mnemonic \"gauge enact biology destroy normal tunnel slight slide wide sauce ladder produce\"").

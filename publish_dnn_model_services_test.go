@@ -54,6 +54,8 @@ func exampleserviceServiceSnetdaemonConfigFileIsCreated(table *gherkin.DataTable
 		"PASSTHROUGH_ENDPOINT": "http://localhost:7003",
 		"IPFS_END_POINT": "http://localhost:5002",
 		"REGISTRY_ADDRESS_KEY": "%s",
+        "pvt_key_for_metering": "efed2ea91d5ace7f9f7bd91e21223cfded31a6e3f1a746bc52821659e0c94e17",
+        "metering_end_point":"http://demo8325345.mockable.io",
 		"log": {
 		  "level": "debug",
 		  "output": {
@@ -87,11 +89,11 @@ func exampleserviceServiceIsRunning() (err error) {
 	output := logPath + "/example-service.log"
 	exampleRunCmd := "python3 run_example_service.py --daemon-config " + exampleServiceDir + "/" + configServiceName
 	cmd := NewCommand().Dir(exampleServiceDir)
-	cmd.
+	cmd.Run("rm -rf storage-data-dir-1.etcd").
 		Run("./buildproto.sh").
 		Output(output).
 		RunAsync(exampleRunCmd)
-		//CheckOutput("starting daemon")
+		//CheckOutput("starting daemon") //todo this does not work well and was failing the test cases
 
 	return cmd.Err()
 }
