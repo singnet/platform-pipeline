@@ -54,6 +54,7 @@ func exampleserviceServiceSnetdaemonConfigFileIsCreated(table *gherkin.DataTable
 		"PASSTHROUGH_ENDPOINT": "http://localhost:7003",
 		"IPFS_END_POINT": "http://localhost:5002",
 		"REGISTRY_ADDRESS_KEY": "%s",
+        "pvt_key_for_metering": "efed2ea91d5ace7f9f7bd91e21223cfded31a6e3f1a746bc52821659e0c94e17",
         "metering_end_point":"http://demo8325345.mockable.io",
 		"log": {
 		  "level": "debug",
