@@ -21,15 +21,18 @@ jobs:
           mkdir $GOPATH/download
           cd $GOPATH/download
     - run:
-        name: Clone token-contracts, platform-contracts
+        name: Clone token-contracts, platform-contracts, snet-cli & snet-daemon
         command: |
           cd $SINGNET_REPOS
           git clone https://github.com/singnet/token-contracts.git
           git clone https://github.com/singnet/platform-contracts.git
+          git clone https://github.com/singnet/snet-cli.git
+          git clone https://github.com/singnet/snet-daemon.git
     - restore_cache:
-        key: dependency-cache-{{ checksum "../token-contracts/package.json" }}
-    - restore_cache:
-        key: dependency-cache-{{ checksum "../platform-contracts/package.json" }}
+        keys:
+          - dependency-cache-{{ checksum "../token-contracts/package.json" }}
+          - dependency-cache-{{ checksum "../platform-contracts/package.json" }}
+          - dependency-cache-{{ checksum "../snet-daemon/Gopkg*" }}
     - run:
         name: Build token-contracts
         command: |
@@ -47,20 +50,10 @@ jobs:
           npm install
           npm run-script compile
           npm run-script package-npm
-    - save_cache:
-        key: dependency-cache-{{ checksum "../token-contracts/package.json" }}
-        paths:
-          - ../token-contracts/node_modules
-    - save_cache:
-        key: dependency-cache-{{ checksum "../platform-contracts/package.json" }}
-        paths:
-          - ../platform-contracts/node_modules
     - run:
         name: Build snet-cli
         command: |
-          cd $SINGNET_REPOS
-          git clone https://github.com/singnet/snet-cli.git
-          cd snet-cli
+          cd $SINGNET_REPOS/snet-cli
           # install token-contracts and platform-contracts from local dir
           pushd blockchain/
           npm install $SINGNET_REPOS/token-contracts/build/npm-module
@@ -72,9 +65,7 @@ jobs:
         name: Build snet-daemon
         command: |
           export PATH=$PATH:$GOPATH/bin
-          cd $SINGNET_REPOS
-          git clone https://github.com/singnet/snet-daemon.git
-          cd snet-daemon
+          cd $SINGNET_REPOS/snet-daemon
           # install token-contracts and platform-contracts from local dir
           pushd resources/blockchain
           npm install $SINGNET_REPOS/token-contracts/build/npm-module
@@ -99,3 +90,15 @@ jobs:
           go get github.com/DATA-DOG/godog/cmd/godog
           go get github.com/ethereum/go-ethereum/common
           godog
+    - save_cache:
+        key: dependency-cache-{{ checksum "../token-contracts/package.json" }}
+        paths:
+          - ../token-contracts/node_modules
+    - save_cache:
+        key: dependency-cache-{{ checksum "../platform-contracts/package.json" }}
+        paths:
+          - ../platform-contracts/node_modules
+    - save_cache:
+        key: dependency-cache-{{ checksum "../snet-daemon/Gopkg*" }}
+        paths:
+          - ../../../../pkg
