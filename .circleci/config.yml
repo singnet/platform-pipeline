@@ -29,10 +29,11 @@ jobs:
           git clone https://github.com/singnet/snet-cli.git
           git clone https://github.com/singnet/snet-daemon.git
     - restore_cache:
-        keys:
-          - dependency-cache-{{ checksum "../token-contracts/package.json" }}
-          - dependency-cache-{{ checksum "../platform-contracts/package.json" }}
-          - dependency-cache-{{ checksum "../snet-daemon/Gopkg*" }}
+        key: dependency-cache-{{ checksum "../token-contracts/package.json" }}
+    - restore_cache:
+        key: dependency-cache-{{ checksum "../platform-contracts/package.json" }}
+    - restore_cache:
+        key: dependency-cache-{{ checksum "../snet-daemon/Gopkg.lock" }}
     - run:
         name: Build token-contracts
         command: |
@@ -99,6 +100,6 @@ jobs:
         paths:
           - ../platform-contracts/node_modules
     - save_cache:
-        key: dependency-cache-{{ checksum "../snet-daemon/Gopkg*" }}
+        key: dependency-cache-{{ checksum "../snet-daemon/Gopkg.lock" }}
         paths:
           - ../../../../pkg
