@@ -25,8 +25,11 @@ jobs:
         command: |
           cd $SINGNET_REPOS
           git clone https://github.com/singnet/token-contracts.git
+          git clone https://github.com/singnet/platform-contracts.git
     - restore_cache:
         key: dependency-cache-{{ checksum "../token-contracts/package.json" }}
+    - restore_cache:
+        key: dependency-cache-{{ checksum "../platform-contracts/package.json" }}
     - run:
         name: Build token-contracts
         command: |
@@ -34,22 +37,24 @@ jobs:
           npm install
           npm run-script compile
           npm run-script package-npm
-    - save_cache:
-        key: dependency-cache-{{ checksum "../token-contracts/package.json" }}
-        paths:
-          - $SINGNET_REPOS/token-contracts/node_modules
     - run:
         name: Build platform-contracts
         command: |
-          cd $SINGNET_REPOS
-          git clone https://github.com/singnet/platform-contracts.git
-          cd platform-contracts
+          cd $SINGNET_REPOS/platform-contracts
           npm install ganache-cli@6.3.0
           # install token-contracts from local dir
           npm install $SINGNET_REPOS/token-contracts/build/npm-module
           npm install
           npm run-script compile
           npm run-script package-npm
+    - save_cache:
+        key: dependency-cache-{{ checksum "../token-contracts/package.json" }}
+        paths:
+          - ../token-contracts/node_modules
+    - save_cache:
+        key: dependency-cache-{{ checksum "../platform-contracts/package.json" }}
+        paths:
+          - ../platform-contracts/node_modules
     - run:
         name: Build snet-cli
         command: |
