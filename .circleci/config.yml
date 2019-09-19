@@ -21,19 +21,22 @@ jobs:
           mkdir $GOPATH/download
           cd $GOPATH/download
     - run:
-        name: Clone token-contracts, platform-contracts, snet-cli & snet-daemon
+        name: Clone token-contracts, platform-contracts, snet-cli, snet-sdk-js & snet-daemon
         command: |
           cd $SINGNET_REPOS
           git clone https://github.com/singnet/token-contracts.git
           git clone https://github.com/singnet/platform-contracts.git
           git clone https://github.com/singnet/snet-cli.git
           git clone https://github.com/singnet/snet-daemon.git
+          git clone https://github.com/singnet/snet-sdk-js.git
     - restore_cache:
         key: dependency-cache-{{ checksum "../token-contracts/package.json" }}
     - restore_cache:
         key: dependency-cache-{{ checksum "../platform-contracts/package.json" }}
     - restore_cache:
         key: dependency-cache-{{ checksum "../snet-daemon/Gopkg.toml" }}
+    - restore_cache:
+        key: dependency-cache-{{ checksum "../snet-sdk-js/package.json" }}
     - run:
         name: Build token-contracts
         command: |
@@ -62,6 +65,11 @@ jobs:
           popd
           ./packages/snet_cli/scripts/blockchain install
           pip3 install -e ./packages/snet_cli
+    - run:
+        name: Build snet-sdk-js
+        command: |
+          cd $SINGNET_REPOS/snet-sdk-js
+          npm install
     - run:
         name: Build snet-daemon
         command: |
