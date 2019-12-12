@@ -151,11 +151,12 @@ func organizationIsAdded(table *gherkin.DataTable) (err error) {
 	organization := getTableValue(table, "organization")
 	etcd_endpoint := getTableValue(table, "etcd endpoint")
 	group_name := getTableValue(table, "group name")
+	org_type := getTableValue(table, "type")
 
 	//snet organization add-group group1 0x42A605c07EdE0E1f648aB054775D6D4E38496144 5.5.6.7:8089
 
 	err = NewCommand().
-		Run("snet organization metadata-init %s %s", organization, organization).
+		Run("snet organization metadata-init %s %s %s", organization, organization, org_type).
 		Run("snet organization add-group %s `snet account print --wallet-index 1` %s ", group_name, etcd_endpoint).
 		Run("snet organization create %s -y", organization).
 		Err()
