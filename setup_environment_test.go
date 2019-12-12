@@ -132,13 +132,13 @@ func ipfsIsRunning(portAPI int, portGateway int) (err error) {
 func snetIsConfiguredLocalRpc(table *gherkin.DataTable) (err error) {
 	rpc_port := getTableValue(table, "Ethereum RPC port")
 	user_name := getTableValue(table, "user name")
-	//ipfs_port := getTableValue(table, "IPFS port")
+	ipfs_port := getTableValue(table, "IPFS port")
 
 	err = NewCommand().
-		//Run("rm -rf ~/.snet").
+		Run("rm -rf ~/.snet").
 		Run("snet network create local http://localhost:%s", rpc_port).
 		Run("snet identity create %s rpc --network local", user_name).
-		//Run("snet set default_ipfs_endpoint http://localhost:%s", ipfs_port).
+		Run("snet set default_ipfs_endpoint http://localhost:%s", ipfs_port).
 		Run("snet set current_singularitynettoken_at " + singnetTokenAddress).
 		Run("snet set current_registry_at " + registryAddress).
 		Run("snet set current_multipartyescrow_at " + multiPartyEscrow).
