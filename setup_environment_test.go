@@ -132,13 +132,13 @@ func ipfsIsRunning(portAPI int, portGateway int) (err error) {
 func snetIsConfiguredLocalRpc(table *gherkin.DataTable) (err error) {
 	rpc_port := getTableValue(table, "Ethereum RPC port")
 	user_name := getTableValue(table, "user name")
-	ipfs_port := getTableValue(table, "IPFS port")
+	//ipfs_port := getTableValue(table, "IPFS port")
 
 	err = NewCommand().
-		Run("rm -rf ~/.snet").
+		//Run("rm -rf ~/.snet").
 		Run("snet network create local http://localhost:%s", rpc_port).
 		Run("snet identity create %s rpc --network local", user_name).
-		Run("snet set default_ipfs_endpoint http://localhost:%s", ipfs_port).
+		//Run("snet set default_ipfs_endpoint http://localhost:%s", ipfs_port).
 		Run("snet set current_singularitynettoken_at " + singnetTokenAddress).
 		Run("snet set current_registry_at " + registryAddress).
 		Run("snet set current_multipartyescrow_at " + multiPartyEscrow).
@@ -151,11 +151,12 @@ func organizationIsAdded(table *gherkin.DataTable) (err error) {
 	organization := getTableValue(table, "organization")
 	etcd_endpoint := getTableValue(table, "etcd endpoint")
 	group_name := getTableValue(table, "group name")
+	org_type := getTableValue(table, "type")
 
 	//snet organization add-group group1 0x42A605c07EdE0E1f648aB054775D6D4E38496144 5.5.6.7:8089
 
 	err = NewCommand().
-		Run("snet organization metadata-init %s %s", organization, organization).
+		Run("snet organization metadata-init %s %s %s", organization, organization, org_type).
 		Run("snet organization add-group %s `snet account print --wallet-index 1` %s ", group_name, etcd_endpoint).
 		Run("snet organization create %s -y", organization).
 		Err()
