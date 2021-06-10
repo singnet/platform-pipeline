@@ -41,6 +41,7 @@ jobs:
         name: Build token-contracts
         command: |
           cd $SINGNET_REPOS/token-contracts
+          npm cache clean --force
           npm install
           npm run-script compile
           npm run-script package-npm
@@ -48,8 +49,11 @@ jobs:
         name: Build platform-contracts
         command: |
           cd $SINGNET_REPOS/platform-contracts
-          npm install ganache-cli@6.3.0
+          npm cache clean --force
+          npm install ganache-cli@6.12.0
+          npm install
           # install token-contracts from local dir
+          npm cache clean --force
           npm install $SINGNET_REPOS/token-contracts/build/npm-module
           npm install
           npm run-script compile

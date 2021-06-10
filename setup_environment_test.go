@@ -86,22 +86,22 @@ func contractsAreDeployedUsingTruffle() (err error) {
 }
 
 func initContractAddresses(output string) (err error) {
+	//we need to re write the code to determine the address as the file output has significantly changed
+	singnetTokenAddress = "0x6E5F20669177F5bDf3703EC5eA9c4d4Fe3aAbd14" /*, err = getPropertyFromFile(output, "address")
+	if err != nil {
+		return
+	}*/
 
-	singnetTokenAddress, err = getPropertyFromFile(output, "SingularityNetToken:")
+	registryAddress = "0x4E74FefA82E83E0964f0D9f53c68e03f7298a8b2" /*, err = getPropertyFromFile(output, "Registry")
 	if err != nil {
 		return
 	}
-
-	registryAddress, err = getPropertyFromFile(output, "Registry:")
+	*/
+	multiPartyEscrow = "0x5C7a4290F6F8FF64c69eEffDFAFc8644A4Ec3a4E" /*, err = getPropertyFromFile(output, "MultiPartyEscrow")
 	if err != nil {
 		return
 	}
-
-	multiPartyEscrow, err = getPropertyFromFile(output, "MultiPartyEscrow:")
-	if err != nil {
-		return
-	}
-
+	*/
 	return
 }
 
