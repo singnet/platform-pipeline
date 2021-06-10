@@ -28,6 +28,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install libudev-dev libusb-1.0-0-dev python3-dev -y
           sudo pip3 install setuptools
+          sudo pip3 install grpcio==1.38.0
     - run:
         name: Clone token-contracts, platform-contracts, snet-cli, snet-sdk-js & snet-daemon
         command: |
@@ -73,7 +74,7 @@ jobs:
           npm install $SINGNET_REPOS/platform-contracts/build/npm-module
           popd
           ./packages/snet_cli/scripts/blockchain install
-          pip3 install -e ./packages/snet_cli
+          sudo pip3 install -e ./packages/snet_cli
     - run:
         name: Build snet-sdk-js
         command: |
