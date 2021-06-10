@@ -26,7 +26,7 @@ jobs:
           sudo cp ./go-ipfs/ipfs /usr/local/bin
           sudo chmod +x /usr/local/bin/ipfs
           sudo apt-get update
-          sudo apt-get install libudev-dev libusb-1.0-0-dev -y
+          sudo apt-get install libudev-dev libusb-1.0-0-dev python3-dev -y
           sudo pip3 install setuptools
     - run:
         name: Clone token-contracts, platform-contracts, snet-cli, snet-sdk-js & snet-daemon
