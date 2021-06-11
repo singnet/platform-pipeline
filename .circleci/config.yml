@@ -103,7 +103,7 @@ jobs:
     - run:
         name: Run integration tests
         command: |
-          cd platform-pipeline
+          pwd
           export PATH=$PATH:$GOPATH/bin
           export IPFS_PATH=$GOPATH/ipfs
           mkdir $GOPATH/log
