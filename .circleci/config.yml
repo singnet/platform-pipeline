@@ -84,10 +84,10 @@ jobs:
           export PATH=$PATH:$GOPATH/bin
           cd $SINGNET_REPOS/snet-daemon
           # install token-contracts and platform-contracts from local dir
-          pushd resources/blockchain
-          npm install $SINGNET_REPOS/agix-contracts/build/npm-module
-          npm install $SINGNET_REPOS/platform-contracts/build/npm-module
-          popd
+          #pushd resources/blockchain
+          #npm install $SINGNET_REPOS/agix-contracts/build/npm-module
+          #npm install $SINGNET_REPOS/platform-contracts/build/npm-module
+          #popd
           npm cache clean --force
           ./scripts/install
           ./scripts/build linux amd64 `git describe --tag`
@@ -111,15 +111,3 @@ jobs:
           go get github.com/ethereum/go-ethereum/common
           git clone https://github.com/cucumber/godog.git $GOPATH/src/godogs/vendor/github.com/cucumber/godog
           godog
-    - save_cache:
-        key: dependency-cache-{{ checksum "../token-contracts/package.json" }}
-        paths:
-          - ../token-contracts/node_modules
-    - save_cache:
-        key: dependency-cache-{{ checksum "../platform-contracts/package.json" }}
-        paths:
-          - ../platform-contracts/node_modules
-    - save_cache:
-        key: dependency-cache-{{ checksum "../snet-daemon/Gopkg.toml" }}
-        paths:
-          - ../../../../pkg
