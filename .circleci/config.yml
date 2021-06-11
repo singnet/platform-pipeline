@@ -20,6 +20,10 @@ jobs:
         command: |
           export PATH=$PATH:$GOPATH/bin
           mkdir $GOPATH/download
+          mkdir -p ~/.ssh
+          touch ~/.ssh/known_hosts
+          chmod 700 -R ~/.ssh
+          chmod 600 ~/.ssh/known_hosts
           cd $GOPATH/download
           wget https://dist.ipfs.io/go-ipfs/v0.4.17/go-ipfs_v0.4.17_linux-amd64.tar.gz
           tar xvfz go-ipfs_*.tar.gz
@@ -42,8 +46,9 @@ jobs:
         name: Build token-contracts
         command: |
           cd $SINGNET_REPOS/agix-contracts
+          ssh-keyscan github.com >> ~/.ssh/known_hosts
           npm install
-          sudo npm install -g truffle
+          npm install truffle
           npm run-script compile
           npm run-script package-npm
     - run:
