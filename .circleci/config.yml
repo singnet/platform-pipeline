@@ -33,24 +33,17 @@ jobs:
         name: Clone token-contracts, platform-contracts, snet-cli, snet-sdk-js & snet-daemon
         command: |
           cd $SINGNET_REPOS
-          git clone https://github.com/singnet/token-contracts.git
+          git clone https://github.com/singnet/agix-contracts.git
           git clone https://github.com/singnet/platform-contracts.git
           git clone https://github.com/singnet/snet-cli.git
           git clone https://github.com/singnet/snet-daemon.git
           git clone https://github.com/singnet/snet-sdk-js.git
-    - restore_cache:
-        key: dependency-cache-{{ checksum "../token-contracts/package.json" }}
-    - restore_cache:
-        key: dependency-cache-{{ checksum "../platform-contracts/package.json" }}
-    - restore_cache:
-        key: dependency-cache-{{ checksum "../snet-daemon/Gopkg.toml" }}
-    - restore_cache:
-        key: dependency-cache-{{ checksum "../snet-sdk-js/package.json" }}
     - run:
         name: Build token-contracts
         command: |
-          cd $SINGNET_REPOS/token-contracts
+          cd $SINGNET_REPOS/agix-contracts
           npm install
+          sudo npm install -g truffle
           npm run-script compile
           npm run-script package-npm
     - run:
@@ -60,7 +53,7 @@ jobs:
           npm cache clean --force
           npm install ganache-cli@6.3.0
           # install token-contracts from local dir
-          npm install $SINGNET_REPOS/token-contracts/build/npm-module
+          npm install $SINGNET_REPOS/agix-contracts/build/npm-module
           npm install
           npm run-script compile
           npm run-script package-npm
@@ -70,7 +63,7 @@ jobs:
           cd $SINGNET_REPOS/snet-cli
           # install token-contracts and platform-contracts from local dir
           pushd blockchain/
-          npm install $SINGNET_REPOS/token-contracts/build/npm-module
+          npm install $SINGNET_REPOS/agix-contracts/build/npm-module
           npm install $SINGNET_REPOS/platform-contracts/build/npm-module
           popd
           ./packages/snet_cli/scripts/blockchain install
@@ -87,9 +80,10 @@ jobs:
           cd $SINGNET_REPOS/snet-daemon
           # install token-contracts and platform-contracts from local dir
           pushd resources/blockchain
-          npm install $SINGNET_REPOS/token-contracts/build/npm-module
+          npm install $SINGNET_REPOS/agix-contracts/build/npm-module
           npm install $SINGNET_REPOS/platform-contracts/build/npm-module
           popd
+          npm cache clean --force
           ./scripts/install
           ./scripts/build linux amd64 `git describe --tag`
           sudo ln -s $SINGNET_REPOS/snet-daemon/build/snetd-linux-amd64 /usr/local/bin/snetd
