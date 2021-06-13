@@ -1,7 +1,8 @@
 package main
 
 import (
-	"github.com/DATA-DOG/godog/gherkin"
+	"fmt"
+	"github.com/cucumber/godog"
 	"github.com/ethereum/go-ethereum/common"
 	"log"
 )
@@ -106,7 +107,7 @@ func initContractAddresses(output string) (err error) {
 }
 
 func ipfsIsRunning(portAPI int, portGateway int) (err error) {
-
+	fmt.Println("ipfsIsRunning")
 	addressAPI := "/ip4/127.0.0.1/tcp/" + toString(portAPI)
 	addressGateway := "/ip4/0.0.0.0/tcp/" + toString(portGateway)
 	outputFile := logPath + "/ipfs.log"
@@ -129,7 +130,8 @@ func ipfsIsRunning(portAPI int, portGateway int) (err error) {
 	return
 }
 
-func snetIsConfiguredLocalRpc(table *gherkin.DataTable) (err error) {
+func snetIsConfiguredLocalRpc(table *godog.Table) (err error) {
+	fmt.Println("snetIsConfiguredLocalRpc")
 	rpc_port := getTableValue(table, "Ethereum RPC port")
 	user_name := getTableValue(table, "user name")
 	ipfs_port := getTableValue(table, "IPFS port")
@@ -146,7 +148,7 @@ func snetIsConfiguredLocalRpc(table *gherkin.DataTable) (err error) {
 	return
 }
 
-func organizationIsAdded(table *gherkin.DataTable) (err error) {
+func organizationIsAdded(table *godog.Table) (err error) {
 
 	organization := getTableValue(table, "organization")
 	etcd_endpoint := getTableValue(table, "etcd endpoint")
@@ -165,7 +167,7 @@ func organizationIsAdded(table *gherkin.DataTable) (err error) {
 
 }
 
-func getTableValue(table *gherkin.DataTable, column string) string {
+func getTableValue(table *godog.Table, column string) string {
 
 	names := table.Rows[0].Cells
 	for i, cell := range names {
