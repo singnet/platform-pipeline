@@ -107,8 +107,9 @@ jobs:
           export PATH=$PATH:$GOPATH/bin
           export IPFS_PATH=$GOPATH/ipfs
           mkdir $GOPATH/log
-          GO111MODULE=on go get github.com/cucumber/godog/cmd/godog
+          GO111MODULE=on
+          go get github.com/cucumber/godog/cmd/godog
           #go get github.com/DATA-DOG/godog/cmd/godog
           go get github.com/ethereum/go-ethereum/common
-          #git clone https://github.com/cucumber/godog.git $GOPATH/src/godogs/vendor/github.com/cucumber/godog
+          git clone https://github.com/cucumber/godog.git $GOPATH/src/godogs/vendor/github.com/cucumber/godog
           godog
