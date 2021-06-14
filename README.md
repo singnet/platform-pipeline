@@ -18,9 +18,9 @@ SingularityNET Platform CI/CD Pipeline Repository
 
 ## Add a new test scenario
 
-Integration tests use [GoDog](https://github.com/DATA-DOG/godog) for test writing which is based on
+Integration tests use [GoDog](https://github.com/cucumber/godog) for test writing which is based on
 cucumber gherkin3 parser.
-
+ export GO111MODULE=on, running go mod init, and then installing a specific version of godog with a command like go get github.com/cucumber/godog/cmd/godog@v0.8.1
 For example, test organization registering:
 * Add a new scenario to the [features/publish_service.feature](features/publish_service.feature) file:
 ```gherkin
@@ -40,7 +40,7 @@ It will print stub methods which needs to be implemented:
 ```go
 //You can implement step definitions for undefined steps with these snippets:
 
-func organizationIsRegistered(arg1 *gherkin.DataTable) error {
+func organizationIsRegistered(arg1 *godog.Table) error {
 	return godog.ErrPending
 }
 
@@ -75,14 +75,14 @@ func FeatureContext(s *godog.Suite) {
 package main
 
 import (
-	"github.com/DATA-DOG/godog/gherkin"
+	"github.com/cucumber/godog"
 )
 
-func organizationIsRegistered(table *gherkin.DataTable) error {
+func organizationIsRegistered(table  *godog.Table) error {
 	return godog.ErrPending
 }
 
-func organizationIsIncludedIntoTheList(table *gherkin.DataTable) error {
+func organizationIsIncludedIntoTheList(table *godog.Table) error {
 	return godog.ErrPending
 }
 ```

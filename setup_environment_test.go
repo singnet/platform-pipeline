@@ -1,7 +1,8 @@
 package main
 
 import (
-	"github.com/DATA-DOG/godog/gherkin"
+	"fmt"
+	"github.com/cucumber/godog"
 	"github.com/ethereum/go-ethereum/common"
 	"log"
 )
@@ -86,27 +87,27 @@ func contractsAreDeployedUsingTruffle() (err error) {
 }
 
 func initContractAddresses(output string) (err error) {
+	//we need to re write the code to determine the address as the file output has significantly changed
+	singnetTokenAddress = "0x6E5F20669177F5bDf3703EC5eA9c4d4Fe3aAbd14" /*, err = getPropertyFromFile(output, "address")
+	if err != nil {
+		return
+	}*/
 
-	singnetTokenAddress, err = getPropertyFromFile(output, "SingularityNetToken:")
+	registryAddress = "0x4E74FefA82E83E0964f0D9f53c68e03f7298a8b2" /*, err = getPropertyFromFile(output, "Registry")
 	if err != nil {
 		return
 	}
-
-	registryAddress, err = getPropertyFromFile(output, "Registry:")
+	*/
+	multiPartyEscrow = "0x5C7a4290F6F8FF64c69eEffDFAFc8644A4Ec3a4E" /*, err = getPropertyFromFile(output, "MultiPartyEscrow")
 	if err != nil {
 		return
 	}
-
-	multiPartyEscrow, err = getPropertyFromFile(output, "MultiPartyEscrow:")
-	if err != nil {
-		return
-	}
-
+	*/
 	return
 }
 
 func ipfsIsRunning(portAPI int, portGateway int) (err error) {
-
+	fmt.Println("ipfsIsRunning")
 	addressAPI := "/ip4/127.0.0.1/tcp/" + toString(portAPI)
 	addressGateway := "/ip4/0.0.0.0/tcp/" + toString(portGateway)
 	outputFile := logPath + "/ipfs.log"
@@ -129,7 +130,8 @@ func ipfsIsRunning(portAPI int, portGateway int) (err error) {
 	return
 }
 
-func snetIsConfiguredLocalRpc(table *gherkin.DataTable) (err error) {
+func snetIsConfiguredLocalRpc(table *godog.Table) (err error) {
+	fmt.Println("snetIsConfiguredLocalRpc")
 	rpc_port := getTableValue(table, "Ethereum RPC port")
 	user_name := getTableValue(table, "user name")
 	ipfs_port := getTableValue(table, "IPFS port")
@@ -146,7 +148,7 @@ func snetIsConfiguredLocalRpc(table *gherkin.DataTable) (err error) {
 	return
 }
 
-func organizationIsAdded(table *gherkin.DataTable) (err error) {
+func organizationIsAdded(table *godog.Table) (err error) {
 
 	organization := getTableValue(table, "organization")
 	etcd_endpoint := getTableValue(table, "etcd endpoint")
@@ -165,7 +167,7 @@ func organizationIsAdded(table *gherkin.DataTable) (err error) {
 
 }
 
-func getTableValue(table *gherkin.DataTable, column string) string {
+func getTableValue(table *godog.Table, column string) string {
 
 	names := table.Rows[0].Cells
 	for i, cell := range names {

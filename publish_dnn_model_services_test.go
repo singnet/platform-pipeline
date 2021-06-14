@@ -5,14 +5,14 @@ import (
 	"log"
 	"os"
 
-	"github.com/DATA-DOG/godog/gherkin"
+	"github.com/cucumber/godog"
 )
 
 const (
 	configServiceName = "snetd.config.json"
 )
 
-func exampleserviceServiceIsRegistered(table *gherkin.DataTable) (err error) {
+func exampleserviceServiceIsRegistered(table *godog.Table) (err error) {
 
 	name := getTableValue(table, "name")
 	displayName := getTableValue(table, "display name")
@@ -35,7 +35,7 @@ func exampleserviceServiceIsRegistered(table *gherkin.DataTable) (err error) {
 	return cmd.Err()
 }
 
-func exampleserviceServiceSnetdaemonConfigFileIsCreated(table *gherkin.DataTable) (err error) {
+func exampleserviceServiceSnetdaemonConfigFileIsCreated(table *godog.Table) (err error) {
 
 	serviceName := getTableValue(table, "name")
 	organizationName := getTableValue(table, "organization name")
@@ -98,7 +98,7 @@ func exampleserviceServiceIsRunning() (err error) {
 	return cmd.Err()
 }
 
-func exampleserviceMakeACallUsingPaymentChannel(table *gherkin.DataTable) (err error) {
+func exampleserviceMakeACallUsingPaymentChannel(table *godog.Table) (err error) {
 
 	group_name := getTableValue(table, "group name")
 	organization := getTableValue(table, "organization name")
@@ -114,7 +114,7 @@ func exampleserviceMakeACallUsingPaymentChannel(table *gherkin.DataTable) (err e
 	return cmd.Err()
 }
 
-func exampleserviceClaimChannelByTreasurerServer(table *gherkin.DataTable) (err error) {
+func exampleserviceClaimChannelByTreasurerServer(table *godog.Table) (err error) {
 
 	daemonPort := getTableValue(table, "daemon port")
 	cmd := NewCommand().Dir(exampleServiceDir)

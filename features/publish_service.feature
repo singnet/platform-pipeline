@@ -1,13 +1,13 @@
 Feature: Publish example service
 
-    Background: Run all services
+    Scenario: Run all services
         Given Ethereum network is running on port 8545
         Given Contracts are deployed using Truffle
         Given IPFS is running with API port 5002 and Gateway port 8081
         Given snet is configured local rpc
             | Ethereum RPC port | user name   | IPFS port |
             | 8545              | "snet-user" | 5002      |
-        Given Organization is added:
+        Given Organization is added
             | organization        |etcd endpoint|group name|type|
             | ExampleOrganization |http://127.0.0.1:2379|default_group|individual|
 
