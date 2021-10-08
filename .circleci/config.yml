@@ -29,7 +29,7 @@ jobs:
           tar xvfz go-ipfs_*.tar.gz
           sudo cp ./go-ipfs/ipfs /usr/local/bin
           sudo chmod +x /usr/local/bin/ipfs
-          sudo apt-get update
+          sudo apt-get --allow-releaseinfo-change update
           sudo apt-get install libudev-dev libusb-1.0-0-dev python3-dev -y
           sudo pip3 install --upgrade pip
           sudo pip3 install setuptools
