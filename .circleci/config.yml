@@ -108,7 +108,7 @@ jobs:
           export IPFS_PATH=$GOPATH/ipfs
           mkdir $GOPATH/log
           GO111MODULE=on
-          go get github.com/cucumber/godog/cmd/godog
+          go get github.com/cucumber/godog/cmd/godog@v0.12.4
           go get github.com/cucumber/godog
           #go get github.com/DATA-DOG/godog/cmd/godog
           go get github.com/ethereum/go-ethereum/common
